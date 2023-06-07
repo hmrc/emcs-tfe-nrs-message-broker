@@ -1,7 +1,7 @@
 
 # emcs-tfe-nrs-message-broker
 
-This is a placeholder README.md for a new repository
+This µService acts as a message broker to send data to the Non-Repudiation Service (NRS)
 
 ### License
 
