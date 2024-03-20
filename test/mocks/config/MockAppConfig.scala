@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package config
+package mocks.config
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import config.AppConfig
+import org.scalamock.handlers.CallHandler1
+import org.scalamock.scalatest.MockFactory
 
-@Singleton
-class AppConfig @Inject()(config: Configuration) {
+trait MockAppConfig extends MockFactory {
+  lazy val mockAppConfig: AppConfig = mock[AppConfig]
 
-  lazy val appName: String = config.get[String]("appName")
-
-  def getMongoLockTimeoutForJob(jobName: String): Int = config.get[Int](s"schedules.$jobName.mongoLockTimeout")
+  object MockedAppConfig {
+    def getMongoLockTimeoutForJob(jobName: String): CallHandler1[String, Int] = {
+      (mockAppConfig.getMongoLockTimeoutForJob(_: String)).expects(jobName)
+    }
+  }
 }
