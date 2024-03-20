@@ -16,22 +16,27 @@
 
 package support
 
-import org.scalatest.EitherValues
+import connectors.WireMockHelper
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.should.Matchers
-import org.scalatestplus.mockito.MockitoSugar.mock
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.{EitherValues, OptionValues}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.mongo.lock.MongoLockRepository
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 
-import scala.concurrent.ExecutionContext
+trait IntegrationSpec extends AnyFreeSpec
+  with GuiceOneAppPerSuite
+  with WireMockHelper
+  with ScalaFutures
+  with Matchers
+  with IntegrationPatience
+  with EitherValues
+  with OptionValues {
 
-trait UnitSpec extends AnyFreeSpec with EitherValues with Matchers with FutureAwaits with DefaultAwaitTimeout with GuiceOneAppPerSuite {
-
-  implicit lazy val hc: HeaderCarrier = HeaderCarrier()
-  implicit lazy val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
-
-  val mockLockRepository: MongoLockRepository = mock[MongoLockRepository]
-  
+  override lazy val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.nrs.port" -> server.port,
+      "microservice.services.nrs.apiKey" -> "TESTAPIKEY"
+    ).build()
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package controllers
+package models.request
 
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import play.api.libs.json.{Format, Json}
 
-import javax.inject.{Inject, Singleton}
+case class NRSPayload(
+                       payload: String,
+                       metadata: NRSMetadata
+                     )
 
-@Singleton()
-class MicroserviceHelloWorldController @Inject()(cc: ControllerComponents)
-    extends BackendController(cc) {
-
-  def hello(): Action[AnyContent] = Action {
-    Ok("Hello world")
-  }
+object NRSPayload {
+  implicit val format: Format[NRSPayload] = Json.format[NRSPayload]
 }

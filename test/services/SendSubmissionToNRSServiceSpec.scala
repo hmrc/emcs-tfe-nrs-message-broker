@@ -21,6 +21,7 @@ import mocks.config.MockAppConfig
 import models.mongo.MongoLockResponses
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.{reset, times, verify, when}
+import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import scheduler.JobFailed
 import support.{LogCapturing, UnitSpec}
 import utils.PagerDutyHelper.PagerDutyKeys
@@ -48,18 +49,18 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
       .thenReturn(Future.successful(()))
   }
 
-  "invoke" should {
+  "invoke" - {
     //TODO: change when logic is implemented
     "return an empty string when the Mongo lock is acquired" in new Setup {
 
       MockedAppConfig.getMongoLockTimeoutForJob(jobName).returns(mongoLockTimeout)
 
-      val result: Either[JobFailed, String] = await(service.invoke)
+      val result: Either[JobFailed, String] = service.invoke.futureValue
       result shouldBe Right("")
     }
   }
 
-  "tryLock" should {
+  "tryLock" - {
     "invoke the provided function when lockRepository is able to lock and unlock successfully" in new Setup {
       val expectingResult: Future[Right[Nothing, String]] = Future.successful(Right(""))
 
@@ -68,7 +69,7 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
       when(mockLockRepository.releaseLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any()))
         .thenReturn(Future.successful(()))
 
-      await(service.tryLock(expectingResult)) shouldBe Right("")
+      service.tryLock(expectingResult).futureValue shouldBe Right("")
 
       verify(mockLockRepository, times(1)).takeLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any(), ArgumentMatchers.eq(releaseDuration))
       verify(mockLockRepository, times(1)).releaseLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any())
@@ -82,7 +83,7 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
 
       withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
 
-        await(service.tryLock(expectingResult)) shouldBe Right(s"$jobName - JobAlreadyRunning")
+        service.tryLock(expectingResult).futureValue shouldBe Right(s"$jobName - JobAlreadyRunning")
 
         capturedLogEvents.exists(_.getMessage == s"[SendSubmissionToNRSService][$jobName] Locked because it might be running on another instance") shouldBe true
       }
@@ -101,7 +102,7 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
 
       withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
 
-        await(service.tryLock(Future.successful(Right("")))) shouldBe Left(MongoLockResponses.UnknownException(exception))
+        service.tryLock(Future.successful(Right(""))).futureValue shouldBe Left(MongoLockResponses.UnknownException(exception))
 
         capturedLogEvents.exists(_.getMessage == s"[SendSubmissionToNRSService][$jobName] Failed with exception") shouldBe true
         capturedLogEvents.exists(_.getMessage.contains(PagerDutyKeys.MONGO_LOCK_UNKNOWN_EXCEPTION.toString)) shouldBe true
@@ -121,7 +122,7 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
 
       withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
 
-        await(service.tryLock(Future.successful(Right("")))) shouldBe Left(MongoLockResponses.UnknownException(exception))
+        service.tryLock(Future.successful(Right(""))).futureValue shouldBe Left(MongoLockResponses.UnknownException(exception))
 
         capturedLogEvents.exists(_.getMessage == s"[SendSubmissionToNRSService][$jobName] Failed with exception") shouldBe true
         capturedLogEvents.exists(_.getMessage.contains(PagerDutyKeys.MONGO_LOCK_UNKNOWN_EXCEPTION.toString)) shouldBe true

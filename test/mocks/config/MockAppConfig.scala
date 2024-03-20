@@ -17,7 +17,7 @@
 package mocks.config
 
 import config.AppConfig
-import org.scalamock.handlers.CallHandler1
+import org.scalamock.handlers.{CallHandler0, CallHandler1}
 import org.scalamock.scalatest.MockFactory
 
 trait MockAppConfig extends MockFactory {
@@ -27,5 +27,8 @@ trait MockAppConfig extends MockFactory {
     def getMongoLockTimeoutForJob(jobName: String): CallHandler1[String, Int] = {
       (mockAppConfig.getMongoLockTimeoutForJob(_: String)).expects(jobName)
     }
+
+    def nrsSubmissionUrl: CallHandler0[String] = ((() => mockAppConfig.nrsSubmissionUrl): () => String).expects()
+    def nonRepudiationServiceAPIKey: CallHandler0[String] = ((() => mockAppConfig.nonRepudiationServiceAPIKey): () => String).expects()
   }
 }

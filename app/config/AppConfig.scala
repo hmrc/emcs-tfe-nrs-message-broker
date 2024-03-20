@@ -18,11 +18,18 @@ package config
 
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
-class AppConfig @Inject()(config: Configuration) {
+class AppConfig @Inject()(servicesConfig: ServicesConfig, config: Configuration) {
 
   lazy val appName: String = config.get[String]("appName")
+
+  def nonRepudiationServiceAPIKey: String = config.get[String]("microservice.services.nrs.apiKey")
+
+  private lazy val nonRepudiationService: String = servicesConfig.baseUrl("nrs")
+
+  def nrsSubmissionUrl: String = s"$nonRepudiationService/submission"
 
   def getMongoLockTimeoutForJob(jobName: String): Int = config.get[Int](s"schedules.$jobName.mongoLockTimeout")
 }

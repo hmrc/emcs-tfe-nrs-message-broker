@@ -22,7 +22,7 @@ import utils.PagerDutyHelper.PagerDutyKeys.MONGO_LOCK_UNKNOWN_EXCEPTION
 
 class PagerDutyHelperSpec extends UnitSpec with Logging with LogCapturing {
 
-  "log" should {
+  "log" - {
     s"log a $PagerDutyKeys Value at level WARN with the method name also included" in {
       withCaptureOfLoggingFrom(logger) { capturedEvents =>
         PagerDutyHelper.log("foo", MONGO_LOCK_UNKNOWN_EXCEPTION)

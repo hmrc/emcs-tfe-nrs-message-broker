@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-package config
+package models.response
 
-import support.UnitSpec
+sealed trait ErrorResponse {
+  val message: String
+}
 
-class AppConfigSpec extends UnitSpec {
+case object UnexpectedDownstreamResponseError extends ErrorResponse {
+  val message = "Unexpected downstream response status"
+}
 
-  lazy val config: AppConfig = app.injector.instanceOf[AppConfig]
-
-  "AppConfig" - {
-
-    "when calling getMongoLockTimeoutForJob" - {
-
-      "should return the correct value for 'SendSubmissionToNRSJob'" in {
-        config.getMongoLockTimeoutForJob("SendSubmissionToNRSJob") shouldBe 7200
-      }
-    }
-  }
+case object JsonValidationError extends ErrorResponse {
+  val message = "JSON validation error"
 }
