@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package config
+package utils
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import play.api.LoggerLike
 
-@Singleton
-class AppConfig @Inject()(config: Configuration) {
+object PagerDutyHelper {
 
-  lazy val appName: String = config.get[String]("appName")
+  object PagerDutyKeys extends Enumeration {
+    final val MONGO_LOCK_UNKNOWN_EXCEPTION = Value
+  }
 
-  def getMongoLockTimeoutForJob(jobName: String): Int = config.get[Int](s"schedules.$jobName.mongoLockTimeout")
+  def log(methodName: String, pagerDutyKey: PagerDutyKeys.Value)(implicit logger: LoggerLike): Unit = logger.warn(s"$pagerDutyKey - $methodName")
 }

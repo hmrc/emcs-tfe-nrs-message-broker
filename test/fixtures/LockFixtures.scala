@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package config
+package fixtures
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import uk.gov.hmrc.mongo.lock.Lock
 
-@Singleton
-class AppConfig @Inject()(config: Configuration) {
+import java.time.Instant
 
-  lazy val appName: String = config.get[String]("appName")
+trait LockFixtures {
 
-  def getMongoLockTimeoutForJob(jobName: String): Int = config.get[Int](s"schedules.$jobName.mongoLockTimeout")
+  val testLock: Lock = Lock(id = "testId", owner = "testOwner", timeCreated = Instant.now, expiryTime = Instant.now())
 }

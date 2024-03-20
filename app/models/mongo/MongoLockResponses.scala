@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package config
+package models.mongo
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import scheduler.JobFailed
 
-@Singleton
-class AppConfig @Inject()(config: Configuration) {
+object MongoLockResponses {
 
-  lazy val appName: String = config.get[String]("appName")
+  case class UnknownException(e: Exception) extends JobFailed
 
-  def getMongoLockTimeoutForJob(jobName: String): Int = config.get[Int](s"schedules.$jobName.mongoLockTimeout")
 }

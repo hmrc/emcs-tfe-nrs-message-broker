@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,19 @@
 
 package config
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import support.UnitSpec
 
-@Singleton
-class AppConfig @Inject()(config: Configuration) {
+class AppConfigSpec extends UnitSpec {
 
-  lazy val appName: String = config.get[String]("appName")
+  lazy val config: AppConfig = app.injector.instanceOf[AppConfig]
 
-  def getMongoLockTimeoutForJob(jobName: String): Int = config.get[Int](s"schedules.$jobName.mongoLockTimeout")
+  "AppConfig" when {
+
+    "calling getMongoLockTimeoutForJob" should {
+
+      "return the correct value for 'SendSubmissionToNRSJob'" in {
+        config.getMongoLockTimeoutForJob("SendSubmissionToNRSJob") shouldBe 7200
+      }
+    }
+  }
 }
