@@ -1,1 +1,4 @@
 # microservice specific routes
+
+
+PUT         /trader/:ern/nrs/submission                 controllers.NRSPayloadController.insertRecord(ern: String)

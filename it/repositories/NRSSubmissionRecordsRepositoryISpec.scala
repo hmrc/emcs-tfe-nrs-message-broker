@@ -2,26 +2,19 @@ package repositories
 
 import com.mongodb.bulk.BulkWriteResult
 import fixtures.NRSFixtures
+import mocks.utils.FakeTimeMachine
 import models.mongo.MongoOperationResponses.BulkWriteFailure
 import models.mongo.NRSSubmissionRecord
 import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, SENT}
 import org.mongodb.scala.Document
 import play.api.test.Helpers._
-import utils.TimeMachine
 
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.Collections.emptyList
 
-class NRSSubmissionRecordsRepositoryISpec extends RepositoryBaseSpec[NRSSubmissionRecord] with NRSFixtures {
-
-  private val instantNow = Instant.now.truncatedTo(ChronoUnit.MILLIS)
-  private val timeMachine = new TimeMachine {
-    override def now: Instant = instantNow
-  }
+class NRSSubmissionRecordsRepositoryISpec extends RepositoryBaseSpec[NRSSubmissionRecord] with NRSFixtures with FakeTimeMachine {
 
   override protected val repository: NRSSubmissionRecordsRepositoryImpl = new NRSSubmissionRecordsRepositoryImpl(
-    mongoComponent = mongoComponent, appConfig = appConfig, timeMachine = timeMachine
+    mongoComponent = mongoComponent, appConfig = appConfig, timeMachine = mockTimeMachine
   )
 
   override protected def afterEach(): Unit = {
