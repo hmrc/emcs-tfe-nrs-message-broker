@@ -19,7 +19,7 @@ package services
 import config.AppConfig
 import connectors.NRSConnector
 import models.FailedJobResponses.FailedToProcessRecords
-import models.mongo.MongoLockResponses
+import models.mongo.{MongoLockResponses, NRSSubmissionRecord}
 import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, SENT}
 import repositories.NRSSubmissionRecordsRepository
 import scheduler.{JobFailed, ScheduledService}
@@ -52,32 +52,18 @@ class SendSubmissionToNRSService @Inject()(lockRepositoryProvider: MongoLockRepo
       logger.info(s"[$jobName][invoke] - Job started")
       for {
         pendingRecords <- nrsSubmissionRecordsRepository.getPendingRecords
-        updatedRecords <- Future.sequence {
+        sentRecords <- Future.sequence {
           logger.info(s"[invoke] - Retrieved ${pendingRecords.size} pending records to be sent to NRS")
-          pendingRecords.map { record =>
-            nrsConnector.submit(record.payload).map {
-              _.fold(
-                _ => {
-                  logger.warn(s"[invoke] - Received error from NRS for record: ${record.reference}, setting to $FAILED_PENDING_RETRY")
-                  PagerDutyHelper.log("invoke", RECORD_SET_TO_FAILED_PENDING_RETRY)
-                  record.copy(status = FAILED_PENDING_RETRY)
-                },
-                _ => {
-                  logger.debug(s"[invoke] - Success response received from NRS for record: ${record.reference}, setting to $SENT")
-                  record.copy(status = SENT)
-                }
-              )
-            }
-          }
+          submitRecordsToNRS(pendingRecords)
         }
         mongoWriteResult <- {
-          if (updatedRecords.nonEmpty) {
-            nrsSubmissionRecordsRepository.updateRecords(updatedRecords)
+          if (sentRecords.nonEmpty) {
+            nrsSubmissionRecordsRepository.updateRecords(sentRecords)
           } else {
             Future(Right(true))
           }
         }
-        isSuccess = updatedRecords.forall(_.status == SENT) && mongoWriteResult.isRight
+        isSuccess = sentRecords.forall(_.status == SENT) && mongoWriteResult.isRight
       } yield {
         if (isSuccess) {
           logger.info("[invoke] - Processed all records in batch")
@@ -104,4 +90,21 @@ class SendSubmissionToNRSService @Inject()(lockRepositoryProvider: MongoLockRepo
         Left(MongoLockResponses.UnknownException(e))
     }
   }
+
+  private def submitRecordsToNRS(records: Seq[NRSSubmissionRecord]): Seq[Future[NRSSubmissionRecord]] =
+    records.map { record =>
+      nrsConnector.submit(record.payload).map {
+        _.fold(
+          _ => {
+            logger.warn(s"[invoke] - Received error from NRS for record: ${record.reference}, setting to $FAILED_PENDING_RETRY")
+            PagerDutyHelper.log("invoke", RECORD_SET_TO_FAILED_PENDING_RETRY)
+            record.copy(status = FAILED_PENDING_RETRY)
+          },
+          _ => {
+            logger.debug(s"[invoke] - Success response received from NRS for record: ${record.reference}, setting to $SENT")
+            record.copy(status = SENT)
+          }
+        )
+      }
+    }
 }
