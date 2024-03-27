@@ -20,7 +20,8 @@ import config.AppConfig
 import connectors.NRSConnector
 import models.FailedJobResponses.FailedToProcessRecords
 import models.mongo.NRSSubmissionRecord
-import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, SENT}
+import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PERMANENTLY_FAILED, SENT}
+import models.response.Downstream4xxError
 import repositories.NRSSubmissionRecordsRepository
 import scheduler.{JobFailed, ScheduledService}
 import uk.gov.hmrc.mongo.lock.{LockRepository, LockService, MongoLockRepository}
@@ -80,14 +81,18 @@ class SendSubmissionToNRSService @Inject()(lockRepositoryProvider: MongoLockRepo
   private def submitRecordsToNRS(records: Seq[NRSSubmissionRecord]): Seq[Future[NRSSubmissionRecord]] =
     records.map { record =>
       nrsConnector.submit(record.payload).map {
-        _.fold(
-          _ => {
+        _.fold({
+          case Downstream4xxError =>
+            logger.warn(s"[submitRecordsToNRS] - A 4xx error was returned from NRS for record: ${record.reference}, setting record to $RECORD_SET_TO_PERMANENTLY_FAILED")
+            PagerDutyHelper.log("submitRecordsToNRS", RECORD_SET_TO_PERMANENTLY_FAILED)
+            record.copy(status = PERMANENTLY_FAILED)
+          case _ =>
             logger.warn(s"[invoke] - Received error from NRS for record: ${record.reference}, setting to $FAILED_PENDING_RETRY")
-            PagerDutyHelper.log("invoke", RECORD_SET_TO_FAILED_PENDING_RETRY)
+            PagerDutyHelper.log("submitRecordsToNRS", RECORD_SET_TO_FAILED_PENDING_RETRY)
             record.copy(status = FAILED_PENDING_RETRY)
-          },
+        },
           _ => {
-            logger.debug(s"[invoke] - Success response received from NRS for record: ${record.reference}, setting to $SENT")
+            logger.debug(s"[submitRecordsToNRS] - Success response received from NRS for record: ${record.reference}, setting to $SENT")
             record.copy(status = SENT)
           }
         )

@@ -5,7 +5,7 @@ import fixtures.NRSFixtures
 import mocks.utils.generators.FakeTimeMachine
 import models.mongo.MongoOperationResponses.BulkWriteFailure
 import models.mongo.NRSSubmissionRecord
-import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, SENT}
+import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, PERMANENTLY_FAILED, SENT}
 import org.mongodb.scala.Document
 import play.api.test.Helpers._
 
@@ -57,7 +57,8 @@ class NRSSubmissionRecordsRepositoryISpec extends RepositoryBaseSpec[NRSSubmissi
       val records = Seq(
         NRSSubmissionRecord(nrsPayload, status = PENDING, reference = "ref1", updatedAt = instantNow),
         NRSSubmissionRecord(nrsPayload, status = FAILED_PENDING_RETRY, reference = "ref2", updatedAt = instantNow),
-        NRSSubmissionRecord(nrsPayload, status = SENT, reference = "ref3", updatedAt = instantNow)
+        NRSSubmissionRecord(nrsPayload, status = SENT, reference = "ref3", updatedAt = instantNow),
+        NRSSubmissionRecord(nrsPayload, status = PERMANENTLY_FAILED, reference = "ref4", updatedAt = instantNow)
       )
 
       await(repository.collection.insertMany(records).toFuture())

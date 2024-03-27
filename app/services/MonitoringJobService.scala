@@ -48,11 +48,13 @@ class MonitoringJobService @Inject()(lockRepositoryProvider: MongoLockRepository
         countOfPendingRecords <- nrsSubmissionRecordsRepository.countRecordsByStatus(PENDING)
         countOfSentRecords <- nrsSubmissionRecordsRepository.countRecordsByStatus(SENT)
         countOfFailedPendingRetryRecords <- nrsSubmissionRecordsRepository.countRecordsByStatus(FAILED_PENDING_RETRY)
+        countOfPermanentlyFailedRecords <- nrsSubmissionRecordsRepository.countRecordsByStatus(PERMANENTLY_FAILED)
       } yield {
         val logOfPendingRecordsCount = s"[invoke] - Count of Pending records: $countOfPendingRecords"
         val logOfSentRecordsCount = s"[invoke] - Count of Sent records: $countOfSentRecords"
         val logOfFailedPendingRetryRecordsCount = s"[invoke] - Count of Failed Pending Retry records: $countOfFailedPendingRetryRecords"
-        val seqOfLogs = Seq(logOfPendingRecordsCount, logOfSentRecordsCount, logOfFailedPendingRetryRecordsCount)
+        val logOfPermanentlyFailedRecordsCount = s"[invoke] - Count of Permanently Failed records: $countOfPermanentlyFailedRecords"
+        val seqOfLogs = Seq(logOfPendingRecordsCount, logOfSentRecordsCount, logOfFailedPendingRetryRecordsCount, logOfPermanentlyFailedRecordsCount)
         seqOfLogs.foreach(logger.info(_))
         Right("Successfully ran monitoring job")
       }

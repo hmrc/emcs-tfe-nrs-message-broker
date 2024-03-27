@@ -16,7 +16,7 @@
 
 package connectors
 
-import models.response.{ErrorResponse, JsonValidationError, UnexpectedDownstreamResponseError}
+import models.response.{Downstream4xxError, ErrorResponse, JsonValidationError, UnexpectedDownstreamResponseError}
 import play.api.http.Status.ACCEPTED
 import play.api.libs.json.Writes
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
@@ -35,6 +35,9 @@ trait NRSHttpParser[A] extends BaseConnectorUtils[A] {
               logger.warn(s"[read] Bad JSON response from NRS")
               Left(JsonValidationError)
           }
+          case status if status >= 400 && status <= 499 =>
+            logger.warn(s"[read] Received 4xx status NRS. Response status: $status")
+            Left(Downstream4xxError)
           case status =>
             logger.warn(s"[read] Unexpected status from NRS: $status")
             Left(UnexpectedDownstreamResponseError)

@@ -17,7 +17,7 @@
 package connectors
 
 import mocks.connectors.MockHttpClient
-import models.response.{JsonValidationError, NRSSuccessResponse, UnexpectedDownstreamResponseError}
+import models.response.{Downstream4xxError, JsonValidationError, NRSSuccessResponse, UnexpectedDownstreamResponseError}
 import play.api.http.Status
 import play.api.libs.json.{Json, Reads}
 import support.UnitSpec
@@ -42,9 +42,22 @@ class NRSHttpParserSpec extends UnitSpec with MockHttpClient{
       }
     }
 
+    "should return Downstream4xxError" - {
+
+      "when status is 4xx" in {
+
+        (400 to 499).foreach { status =>
+          val httpResponse = HttpResponse(status, Json.obj(), Map())
+
+          httpParser.NRSReads.read("POST", "/submission", httpResponse) shouldBe Left(Downstream4xxError)
+        }
+
+      }
+    }
+
     "should return UnexpectedDownstreamError" - {
 
-      s"when status is not ACCEPTED (${Status.ACCEPTED})" in {
+      s"when status is not ACCEPTED (${Status.ACCEPTED}) or 4xx" in {
 
         val httpResponse = HttpResponse(Status.INTERNAL_SERVER_ERROR, Json.obj(), Map())
 
