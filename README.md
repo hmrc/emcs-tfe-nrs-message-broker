@@ -54,7 +54,7 @@ Once a lock is obtained for the job, the contents of the `invoke` method are ran
 
 This job is configured in [application.conf](conf/application.conf) under the `SendSubmissionToNRSJob` object.
 
-The `invoke` method ([code](app/services/SendSubmissionToNRSService.scala)) picks up any records in the [`PENDING`, `SENT` or `FAILED_PENDING_RETRY`](app/models/mongo/RecordStatusEnum.scala) state.
+The `invoke` method ([code](app/services/SendSubmissionToNRSService.scala)) picks up any records in the [`PENDING` or `FAILED_PENDING_RETRY`](app/models/mongo/RecordStatusEnum.scala) state.
 The number of records returned is limited to a configurable value (see `numberOfRecordsToRetrieve` in [application.conf](conf/application.conf)).
 
 It then sends all of these records (sequentially but with no pre-determined delay) to NRS and if an `OK` response is returned with a `nrSubmissionId` ([see response model](app/models/response/NRSSuccessResponse.scala)) then the record is set to `SENT`.

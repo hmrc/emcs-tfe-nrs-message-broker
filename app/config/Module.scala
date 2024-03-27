@@ -17,8 +17,8 @@
 package config
 
 import com.google.inject.AbstractModule
-import scheduler.jobs.{MonitoringJob, SendSubmissionToNRSJob}
 import controllers.actions.{AuthAction, AuthActionImpl}
+import scheduler.jobs.{MonitoringJob, SendSubmissionToNRSJob}
 
 class Module extends AbstractModule {
 

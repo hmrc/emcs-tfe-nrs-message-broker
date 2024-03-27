@@ -19,7 +19,7 @@ package services
 import config.AppConfig
 import connectors.NRSConnector
 import models.FailedJobResponses.FailedToProcessRecords
-import models.mongo.{MongoLockResponses, NRSSubmissionRecord}
+import models.mongo.NRSSubmissionRecord
 import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, SENT}
 import repositories.NRSSubmissionRecordsRepository
 import scheduler.{JobFailed, ScheduledService}
