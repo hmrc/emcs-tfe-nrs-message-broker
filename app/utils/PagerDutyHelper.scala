@@ -22,6 +22,9 @@ object PagerDutyHelper {
 
   object PagerDutyKeys extends Enumeration {
     final val MONGO_LOCK_UNKNOWN_EXCEPTION = Value
+    final val RECORD_SET_TO_FAILED_PENDING_RETRY = Value
+    final val UNKNOWN_PROCESSING_EXCEPTION = Value
+    final val FAILED_TO_PROCESS_RECORD = Value
   }
 
   def log(methodName: String, pagerDutyKey: PagerDutyKeys.Value)(implicit logger: LoggerLike): Unit = logger.warn(s"$pagerDutyKey - $methodName")

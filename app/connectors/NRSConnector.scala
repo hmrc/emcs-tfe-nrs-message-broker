@@ -36,8 +36,8 @@ class NRSConnector @Inject()(val http: HttpClient,
 
   lazy val apiKey: String = config.nonRepudiationServiceAPIKey
 
-  def submit(payload: NRSPayload)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[ErrorResponse, NRSSuccessResponse]] = {
-    val headerCarrierWithAPIKey = hc.withExtraHeaders(X_API_KEY -> apiKey)
+  def submit(payload: NRSPayload)(implicit ec: ExecutionContext): Future[Either[ErrorResponse, NRSSuccessResponse]] = {
+    val headerCarrierWithAPIKey = HeaderCarrier(extraHeaders = Seq(X_API_KEY -> apiKey))
     post(submissionUrl, payload)(headerCarrierWithAPIKey, implicitly, implicitly).recover {
       case error =>
         logger.warn(s"[submit] Unexpected error from NRS: ${error.getClass} ${error.getMessage.take(10000)}")

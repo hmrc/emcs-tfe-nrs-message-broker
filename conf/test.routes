@@ -1,0 +1,3 @@
+# Test-only routes
+
+PUT        /nrs/payload         testOnly.controllers.InsertNRSPayloadController.insertRecord()

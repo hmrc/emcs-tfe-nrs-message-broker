@@ -22,14 +22,12 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.MongoLockRepository
 
 import scala.concurrent.ExecutionContext
 
 trait UnitSpec extends AnyFreeSpec with EitherValues with Matchers with FutureAwaits with DefaultAwaitTimeout with GuiceOneAppPerSuite {
 
-  implicit lazy val hc: HeaderCarrier = HeaderCarrier()
   implicit lazy val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   val mockLockRepository: MongoLockRepository = mock[MongoLockRepository]

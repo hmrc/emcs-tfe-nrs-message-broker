@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-package controllers
+package models
 
-import play.api.libs.ws.WSClient
-import support.IntegrationSpec
+import scheduler.JobFailed
 
-class HealthEndpointIntegrationSpec extends IntegrationSpec {
+object FailedJobResponses {
 
-  private val wsClient = app.injector.instanceOf[WSClient]
-  private val baseUrl  = s"http://localhost:$port"
+  object FailedToProcessRecords extends JobFailed
 
-  "service health endpoint" - {
-    "should respond with 200 status" in {
-      val response =
-        wsClient
-          .url(s"$baseUrl/ping/ping")
-          .get()
-          .futureValue
-
-      response.status mustBe 200
-    }
-  }
 }

@@ -20,23 +20,36 @@ import connectors.WireMockHelper
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{EitherValues, OptionValues}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, EitherValues, OptionValues}
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 
 trait IntegrationSpec extends AnyFreeSpec
-  with GuiceOneAppPerSuite
   with WireMockHelper
+  with GuiceOneServerPerSuite
   with ScalaFutures
   with Matchers
   with IntegrationPatience
+  with BeforeAndAfterEach
+  with BeforeAndAfterAll
   with EitherValues
   with OptionValues {
 
   override lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
-      "microservice.services.nrs.port" -> server.port,
-      "microservice.services.nrs.apiKey" -> "TESTAPIKEY"
+      "microservice.services.nrs.port" -> WireMockHelper.wireMockPort,
+      "microservice.services.nrs.apiKey" -> "TESTAPIKEY",
+      "mongodb.numberOfRecordsToRetrieve" -> 5
     ).build()
+
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
+    startWireMock()
+  }
+
+  override protected def afterAll(): Unit = {
+    super.afterAll()
+    stopWireMock()
+  }
 }

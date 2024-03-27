@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package mocks.connector
+package mocks.connectors
 
 import fixtures.NRSFixtures
 import org.scalamock.handlers.CallHandler

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 
-package controllers
+package utils
 
-import play.api.libs.ws.WSClient
-import support.IntegrationSpec
+import support.UnitSpec
 
-class HealthEndpointIntegrationSpec extends IntegrationSpec {
+import java.time.Instant
 
-  private val wsClient = app.injector.instanceOf[WSClient]
-  private val baseUrl  = s"http://localhost:$port"
+class TimeMachineSpec extends UnitSpec {
 
-  "service health endpoint" - {
-    "should respond with 200 status" in {
-      val response =
-        wsClient
-          .url(s"$baseUrl/ping/ping")
-          .get()
-          .futureValue
+  lazy val fluxCapacitor: TimeMachine = app.injector.instanceOf[TimeMachine]
 
-      response.status mustBe 200
+  "TimeMachine" - {
+    "return instant() as Instant now (allow +- 1 second grace for test execution)" in {
+      fluxCapacitor.now.toEpochMilli shouldBe (Instant.now().toEpochMilli +- 1000)
     }
   }
 }
