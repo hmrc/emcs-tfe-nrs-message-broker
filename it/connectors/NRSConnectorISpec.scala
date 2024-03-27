@@ -19,7 +19,7 @@ package connectors
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.Fault
 import fixtures.NRSFixtures
-import models.response.UnexpectedDownstreamResponseError
+import models.response.{Downstream4xxError, UnexpectedDownstreamResponseError}
 import play.api.http.Status.{ACCEPTED, INTERNAL_SERVER_ERROR, NOT_FOUND}
 import play.api.libs.json.Json
 import support.IntegrationSpec
@@ -46,7 +46,7 @@ class NRSConnectorISpec extends IntegrationSpec with NRSFixtures {
       connector.submit(nrsPayload).futureValue mustBe Right(nrsSuccessResponseModel)
     }
 
-    "must return false when the server responds NOT_FOUND" in {
+    "must return Downstream4xxError when the server responds NOT_FOUND" in {
 
       wireMockServer.stubFor(
         post(urlEqualTo(url))
@@ -55,7 +55,7 @@ class NRSConnectorISpec extends IntegrationSpec with NRSFixtures {
           .willReturn(aResponse().withStatus(NOT_FOUND))
       )
 
-      connector.submit(nrsPayload).futureValue mustBe Left(UnexpectedDownstreamResponseError)
+      connector.submit(nrsPayload).futureValue mustBe Left(Downstream4xxError)
     }
 
     "must fail when the server responds with any other status" in {
