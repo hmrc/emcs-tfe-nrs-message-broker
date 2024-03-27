@@ -31,7 +31,7 @@ trait MockNRSSubmissionRecordsRepository extends MockFactory {
   object MockedNRSSubmissionRecordsRepository {
     def getPendingRecords: CallHandler0[Future[Seq[NRSSubmissionRecord]]] = ((() => mockNRSSubmissionRecordsRepository.getPendingRecords): () => Future[Seq[NRSSubmissionRecord]]).expects()
 
-    def insertRecords(record: NRSSubmissionRecord): CallHandler1[NRSSubmissionRecord, Future[Boolean]] =
+    def insertRecord(record: NRSSubmissionRecord): CallHandler1[NRSSubmissionRecord, Future[Boolean]] =
       (mockNRSSubmissionRecordsRepository.insertRecord(_: NRSSubmissionRecord))
         .expects(record)
 

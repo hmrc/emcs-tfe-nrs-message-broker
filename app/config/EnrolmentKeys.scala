@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,11 @@
 
 package config
 
-import com.google.inject.AbstractModule
-import controllers.actions.{AuthAction, AuthActionImpl}
-import scheduler.jobs.SendSubmissionToNRSJob
+object EnrolmentKeys {
 
-class Module extends AbstractModule {
+  val EMCS_ENROLMENT = "HMRC-EMCS-ORG"
+  val ERN = "ExciseNumber"
+  val ACTIVATED = "activated"
+  val INACTIVE = "inactive"
 
-  override def configure(): Unit = {
-
-    bind(classOf[AppConfig]).asEagerSingleton()
-
-    bind(classOf[SendSubmissionToNRSJob]).asEagerSingleton()
-
-    bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-  }
 }
