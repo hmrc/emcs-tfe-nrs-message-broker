@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package config
+package mocks.utils
 
-import com.google.inject.AbstractModule
-import scheduler.jobs.{MonitoringJob, SendSubmissionToNRSJob}
-import controllers.actions.{AuthAction, AuthActionImpl}
+import utils.TimeMachine
 
-class Module extends AbstractModule {
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
-  override def configure(): Unit = {
+trait FakeTimeMachine {
 
-    bind(classOf[AppConfig]).asEagerSingleton()
+  val instantNow: Instant = Instant.now.truncatedTo(ChronoUnit.MILLIS)
 
-    bind(classOf[SendSubmissionToNRSJob]).asEagerSingleton()
-
-    bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-
-    bind(classOf[MonitoringJob]).asEagerSingleton()
+  val mockTimeMachine: TimeMachine = new TimeMachine {
+    override def now: Instant = instantNow
   }
+
 }

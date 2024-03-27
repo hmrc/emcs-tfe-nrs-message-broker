@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-package config
+package mocks.utils
 
-import com.google.inject.AbstractModule
-import scheduler.jobs.{MonitoringJob, SendSubmissionToNRSJob}
-import controllers.actions.{AuthAction, AuthActionImpl}
+import utils.UUIDGenerator
 
-class Module extends AbstractModule {
+trait FakeUUIDGenerator {
 
-  override def configure(): Unit = {
+  val uuid: String = "uuid-1"
 
-    bind(classOf[AppConfig]).asEagerSingleton()
-
-    bind(classOf[SendSubmissionToNRSJob]).asEagerSingleton()
-
-    bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-
-    bind(classOf[MonitoringJob]).asEagerSingleton()
+  val mockUUIDGenerator: UUIDGenerator = new UUIDGenerator {
+    override def uuidAsString: String = uuid
   }
 }

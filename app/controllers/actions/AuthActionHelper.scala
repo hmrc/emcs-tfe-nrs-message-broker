@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-package config
+package controllers.actions
 
-import com.google.inject.AbstractModule
-import scheduler.jobs.{MonitoringJob, SendSubmissionToNRSJob}
-import controllers.actions.{AuthAction, AuthActionImpl}
+import models.auth.UserRequest
+import play.api.libs.json.JsValue
+import play.api.mvc.{Action, BaseControllerHelpers, Result}
 
-class Module extends AbstractModule {
+import scala.concurrent.Future
 
-  override def configure(): Unit = {
+trait AuthActionHelper extends BaseControllerHelpers {
 
-    bind(classOf[AppConfig]).asEagerSingleton()
+  val auth: AuthAction
 
-    bind(classOf[SendSubmissionToNRSJob]).asEagerSingleton()
-
-    bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-
-    bind(classOf[MonitoringJob]).asEagerSingleton()
-  }
+  def authorisedUserSubmissionRequest(ern: String)(block: UserRequest[JsValue] => Future[Result]): Action[JsValue] =
+    auth(ern).async(parse.json)(block)
 }
