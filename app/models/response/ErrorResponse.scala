@@ -24,6 +24,10 @@ case object UnexpectedDownstreamResponseError extends ErrorResponse {
   val message = "Unexpected downstream response status"
 }
 
+case object Downstream4xxError extends ErrorResponse {
+  val message = "A downstream 4xx response status was returned"
+}
+
 case object JsonValidationError extends ErrorResponse {
   val message = "JSON validation error"
 }

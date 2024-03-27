@@ -24,13 +24,14 @@ import mocks.repositories.MockNRSSubmissionRecordsRepository
 import models.FailedJobResponses.FailedToProcessRecords
 import models.mongo.MongoOperationResponses.BulkWriteFailure
 import models.mongo.NRSSubmissionRecord
-import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, SENT}
-import models.response.UnexpectedDownstreamResponseError
+import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, PERMANENTLY_FAILED, SENT}
+import models.response.{Downstream4xxError, UnexpectedDownstreamResponseError}
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import scheduler.JobFailed
-import support.UnitSpec
+import support.{LogCapturing, UnitSpec}
+import utils.PagerDutyHelper.PagerDutyKeys
 
 import java.time.Instant
 import scala.concurrent.Future
@@ -41,7 +42,8 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
   with LockFixtures
   with MockNRSSubmissionRecordsRepository
   with MockNRSConnector
-  with NRSFixtures {
+  with NRSFixtures
+  with LogCapturing {
 
   val service = new SendSubmissionToNRSService(mockLockRepository, mockNRSSubmissionRecordsRepository, mockNRSConnector, mockAppConfig)
 
@@ -93,7 +95,7 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
 
     "return 'FailedToProcessRecords'" - {
 
-      "when all records sent to NRS fail" in new Setup {
+      "when all records sent to NRS fail (due to a non-4xx error)" in new Setup {
 
         MockedNRSSubmissionRecordsRepository.getPendingRecords.returns(Future.successful(records))
 
@@ -102,11 +104,17 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
 
         MockedNRSSubmissionRecordsRepository.updateRecords(records.map(_.copy(status = FAILED_PENDING_RETRY))).returns(Future.successful(Right(true)))
 
-        val result: Either[JobFailed, String] = service.invoke.futureValue
-        result shouldBe Left(FailedToProcessRecords)
+        withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
+          val result: Either[JobFailed, String] = service.invoke.futureValue
+          result shouldBe Left(FailedToProcessRecords)
+
+          capturedLogEvents.count(_.getMessage.contains(s"${PagerDutyKeys.RECORD_SET_TO_FAILED_PENDING_RETRY.toString} - submitRecordsToNRS")) shouldBe 2
+          capturedLogEvents.count(_.getMessage.contains(PagerDutyKeys.FAILED_TO_PROCESS_RECORD.toString)) shouldBe 1
+
+        }
       }
 
-      "when some records sent to NRS fail" in new Setup {
+      "when some records sent to NRS fail (due to a non-4xx error)" in new Setup {
 
         MockedNRSSubmissionRecordsRepository.getPendingRecords.returns(Future.successful(records))
 
@@ -115,8 +123,51 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
 
         MockedNRSSubmissionRecordsRepository.updateRecords(Seq(records.head.copy(status = SENT), records(1).copy(status = FAILED_PENDING_RETRY))).returns(Future.successful(Right(true)))
 
-        val result: Either[JobFailed, String] = service.invoke.futureValue
-        result shouldBe Left(FailedToProcessRecords)
+        withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
+          val result: Either[JobFailed, String] = service.invoke.futureValue
+          result shouldBe Left(FailedToProcessRecords)
+
+          capturedLogEvents.count(_.getMessage.contains(s"${PagerDutyKeys.RECORD_SET_TO_FAILED_PENDING_RETRY.toString} - submitRecordsToNRS")) shouldBe 1
+
+        }
+      }
+
+      "when all records sent to NRS fail (due to a 4xx error)" in new Setup {
+
+        MockedNRSSubmissionRecordsRepository.getPendingRecords.returns(Future.successful(records))
+
+        MockedNRSConnector.submit(records.head.payload).returns(Future.successful(Left(Downstream4xxError)))
+        MockedNRSConnector.submit(records(1).payload).returns(Future.successful(Left(Downstream4xxError)))
+
+        MockedNRSSubmissionRecordsRepository.updateRecords(records.map(_.copy(status = PERMANENTLY_FAILED))).returns(Future.successful(Right(true)))
+
+        withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
+          val result: Either[JobFailed, String] = service.invoke.futureValue
+          result shouldBe Left(FailedToProcessRecords)
+
+          capturedLogEvents.count(_.getMessage.contains(s"${PagerDutyKeys.RECORD_SET_TO_PERMANENTLY_FAILED.toString} - submitRecordsToNRS")) shouldBe 2
+          capturedLogEvents.count(_.getMessage.contains(PagerDutyKeys.FAILED_TO_PROCESS_RECORD.toString)) shouldBe 1
+
+        }
+      }
+
+      "when some records sent to NRS fail (due to a 4xx error)" in new Setup {
+
+        MockedNRSSubmissionRecordsRepository.getPendingRecords.returns(Future.successful(records))
+
+        MockedNRSConnector.submit(records.head.payload).returns(Future.successful(Right(nrsSuccessResponseModel)))
+        MockedNRSConnector.submit(records(1).payload).returns(Future.successful(Left(Downstream4xxError)))
+
+        MockedNRSSubmissionRecordsRepository.updateRecords(Seq(records.head.copy(status = SENT), records(1).copy(status = PERMANENTLY_FAILED))).returns(Future.successful(Right(true)))
+
+        withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
+          val result: Either[JobFailed, String] = service.invoke.futureValue
+          result shouldBe Left(FailedToProcessRecords)
+
+          capturedLogEvents.count(_.getMessage.contains(s"${PagerDutyKeys.RECORD_SET_TO_PERMANENTLY_FAILED.toString} - submitRecordsToNRS")) shouldBe 1
+          capturedLogEvents.count(_.getMessage.contains(PagerDutyKeys.FAILED_TO_PROCESS_RECORD.toString)) shouldBe 1
+
+        }
       }
 
       "when all records are sent to NRS but fail to get updated in Mongo" in new Setup {
@@ -128,8 +179,13 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
 
         MockedNRSSubmissionRecordsRepository.updateRecords(records.map(_.copy(status = SENT))).returns(Future.successful(Left(BulkWriteFailure(BulkWriteResult.unacknowledged()))))
 
-        val result: Either[JobFailed, String] = service.invoke.futureValue
-        result shouldBe Left(FailedToProcessRecords)
+        withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
+          val result: Either[JobFailed, String] = service.invoke.futureValue
+          result shouldBe Left(FailedToProcessRecords)
+
+          capturedLogEvents.count(_.getMessage.contains(PagerDutyKeys.FAILED_TO_PROCESS_RECORD.toString)) shouldBe 1
+
+        }
       }
     }
   }
