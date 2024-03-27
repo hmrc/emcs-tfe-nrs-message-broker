@@ -21,7 +21,7 @@ import config.AppConfig
 import models.mongo.MongoOperationResponses.BulkWriteFailure
 import models.mongo.{NRSSubmissionRecord, RecordStatusEnum}
 import org.mongodb.scala.BulkWriteResult
-import org.mongodb.scala.model.Filters.in
+import org.mongodb.scala.model.Filters.{equal, in}
 import org.mongodb.scala.model._
 import play.api.libs.json.Format
 import repositories.NRSSubmissionRecordsRepository._
@@ -44,6 +44,8 @@ trait NRSSubmissionRecordsRepository {
   def insertRecord(record: NRSSubmissionRecord): Future[Boolean]
 
   def updateRecords(records: Seq[NRSSubmissionRecord]): Future[Either[JobFailed, Boolean]]
+
+  def countRecordsByStatus(status: RecordStatusEnum.Value): Future[Long]
 }
 
 @Singleton
@@ -95,6 +97,8 @@ class NRSSubmissionRecordsRepositoryImpl @Inject()(mongoComponent: MongoComponen
       .toFuture()
       .flatMap(bulkWriteResultHandlerForUpdates(records, _))
   }
+
+  def countRecordsByStatus(status: RecordStatusEnum.Value): Future[Long] = collection.countDocuments(equal("status", status.toString)).toFuture()
 
   private def bulkWriteResultHandlerForUpdates(originalRecords: Seq[NRSSubmissionRecord], bulkWriteResult: BulkWriteResult)
   : Future[Either[JobFailed, Boolean]] = {

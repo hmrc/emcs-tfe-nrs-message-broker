@@ -147,4 +147,31 @@ class NRSSubmissionRecordsRepositoryISpec extends RepositoryBaseSpec[NRSSubmissi
 
     }
   }
+
+  "countRecordsByStatus" - {
+
+    "count all the records in the specified status" in {
+
+      val records = Seq(
+        NRSSubmissionRecord(nrsPayload, status = FAILED_PENDING_RETRY, reference = "ref2", updatedAt = instantNow),
+        NRSSubmissionRecord(nrsPayload, status = FAILED_PENDING_RETRY, reference = "ref4", updatedAt = instantNow)
+      )
+
+      await(repository.collection.insertMany(records).toFuture())
+
+      await(repository.countRecordsByStatus(FAILED_PENDING_RETRY)) mustBe 2
+    }
+
+    "return 0 if there are no records in the specified status" in {
+
+      val records = Seq(
+        NRSSubmissionRecord(nrsPayload, status = FAILED_PENDING_RETRY, reference = "ref2", updatedAt = instantNow),
+        NRSSubmissionRecord(nrsPayload, status = FAILED_PENDING_RETRY, reference = "ref4", updatedAt = instantNow)
+      )
+
+      await(repository.collection.insertMany(records).toFuture())
+
+      await(repository.countRecordsByStatus(SENT)) mustBe 0
+    }
+  }
 }

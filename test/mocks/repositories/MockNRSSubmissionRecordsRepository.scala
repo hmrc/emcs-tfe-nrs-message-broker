@@ -16,7 +16,7 @@
 
 package mocks.repositories
 
-import models.mongo.NRSSubmissionRecord
+import models.mongo.{NRSSubmissionRecord, RecordStatusEnum}
 import org.scalamock.handlers.{CallHandler0, CallHandler1}
 import org.scalamock.scalatest.MockFactory
 import repositories.NRSSubmissionRecordsRepository
@@ -38,6 +38,8 @@ trait MockNRSSubmissionRecordsRepository extends MockFactory {
     def updateRecords(updatedRecords: Seq[NRSSubmissionRecord]): CallHandler1[Seq[NRSSubmissionRecord], Future[Either[JobFailed, Boolean]]] =
       (mockNRSSubmissionRecordsRepository.updateRecords(_: Seq[NRSSubmissionRecord]))
         .expects(updatedRecords)
+
+    def countRecordsByStatus(status: RecordStatusEnum.Value): CallHandler1[RecordStatusEnum.Value, Future[Long]] = (mockNRSSubmissionRecordsRepository.countRecordsByStatus(_: RecordStatusEnum.Value)).expects(status)
   }
 
 }

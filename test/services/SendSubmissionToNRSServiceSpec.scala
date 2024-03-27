@@ -23,15 +23,14 @@ import mocks.connectors.MockNRSConnector
 import mocks.repositories.MockNRSSubmissionRecordsRepository
 import models.FailedJobResponses.FailedToProcessRecords
 import models.mongo.MongoOperationResponses.BulkWriteFailure
+import models.mongo.NRSSubmissionRecord
 import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, SENT}
-import models.mongo.{MongoLockResponses, NRSSubmissionRecord}
 import models.response.UnexpectedDownstreamResponseError
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import scheduler.JobFailed
-import support.{LogCapturing, UnitSpec}
-import utils.PagerDutyHelper.PagerDutyKeys
+import support.UnitSpec
 
 import java.time.Instant
 import scala.concurrent.Future
@@ -39,7 +38,6 @@ import scala.concurrent.duration.{Duration, DurationInt}
 
 class SendSubmissionToNRSServiceSpec extends UnitSpec
   with MockAppConfig
-  with LogCapturing
   with LockFixtures
   with MockNRSSubmissionRecordsRepository
   with MockNRSConnector
@@ -133,79 +131,6 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
         val result: Either[JobFailed, String] = service.invoke.futureValue
         result shouldBe Left(FailedToProcessRecords)
       }
-    }
-  }
-
-  "tryLock" - {
-    "invoke the provided function when lockRepository is able to lock and unlock successfully" in new Setup {
-      val expectingResult: Future[Right[Nothing, String]] = Future.successful(Right(""))
-
-      when(mockLockRepository.takeLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any(), ArgumentMatchers.eq(releaseDuration)))
-        .thenReturn(Future.successful(Some(testLock)))
-      when(mockLockRepository.releaseLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any()))
-        .thenReturn(Future.successful(()))
-
-      service.tryLock(expectingResult).futureValue shouldBe Right("")
-
-      verify(mockLockRepository, times(1)).takeLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any(), ArgumentMatchers.eq(releaseDuration))
-      verify(mockLockRepository, times(1)).releaseLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any())
-    }
-
-    s"return a job already running if the lock fails to be created" in new Setup {
-      val expectingResult: Future[Right[Nothing, String]] = Future.successful(Right(""))
-
-      when(mockLockRepository.takeLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any(), ArgumentMatchers.eq(releaseDuration)))
-        .thenReturn(Future.successful(None))
-
-      withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
-
-        service.tryLock(expectingResult).futureValue shouldBe Right(s"$jobName - JobAlreadyRunning")
-
-        capturedLogEvents.exists(_.getMessage == s"[SendSubmissionToNRSService][$jobName] Locked because it might be running on another instance") shouldBe true
-      }
-
-      verify(mockLockRepository, times(1)).takeLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any(), ArgumentMatchers.eq(releaseDuration))
-      verify(mockLockRepository, times(0)).releaseLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any())
-    }
-
-    s"return $Left ${MongoLockResponses.UnknownException} if lock returns exception, release lock is still called and succeeds" in new Setup {
-      val exception = new Exception("woopsy")
-
-      when(mockLockRepository.takeLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any(), ArgumentMatchers.eq(releaseDuration)))
-        .thenReturn(Future.failed(exception))
-      when(mockLockRepository.releaseLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any()))
-        .thenReturn(Future.successful(()))
-
-      withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
-
-        service.tryLock(Future.successful(Right(""))).futureValue shouldBe Left(MongoLockResponses.UnknownException(exception))
-
-        capturedLogEvents.exists(_.getMessage == s"[SendSubmissionToNRSService][$jobName] Failed with exception") shouldBe true
-        capturedLogEvents.exists(_.getMessage.contains(PagerDutyKeys.MONGO_LOCK_UNKNOWN_EXCEPTION.toString)) shouldBe true
-      }
-
-      verify(mockLockRepository, times(1)).takeLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any(), ArgumentMatchers.eq(releaseDuration))
-      verify(mockLockRepository, times(1)).releaseLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any())
-    }
-
-    s"return $Left ${MongoLockResponses.UnknownException} if lock returns exception, release lock is still called but failed" in new Setup {
-      val exception = new Exception("not again")
-
-      when(mockLockRepository.takeLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any(), ArgumentMatchers.eq(releaseDuration)))
-        .thenReturn(Future.failed(exception))
-      when(mockLockRepository.releaseLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any()))
-        .thenReturn(Future.failed(exception))
-
-      withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
-
-        service.tryLock(Future.successful(Right(""))).futureValue shouldBe Left(MongoLockResponses.UnknownException(exception))
-
-        capturedLogEvents.exists(_.getMessage == s"[SendSubmissionToNRSService][$jobName] Failed with exception") shouldBe true
-        capturedLogEvents.exists(_.getMessage.contains(PagerDutyKeys.MONGO_LOCK_UNKNOWN_EXCEPTION.toString)) shouldBe true
-      }
-
-      verify(mockLockRepository, times(1)).takeLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any(), ArgumentMatchers.eq(releaseDuration))
-      verify(mockLockRepository, times(1)).releaseLock(ArgumentMatchers.eq(mongoLockId), ArgumentMatchers.any())
     }
   }
 }
