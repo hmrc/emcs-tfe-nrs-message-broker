@@ -17,7 +17,7 @@
 package config
 
 import com.google.inject.AbstractModule
-import scheduler.jobs.SendSubmissionToNRSJob
+import scheduler.jobs.{MonitoringJob, SendSubmissionToNRSJob}
 
 class Module extends AbstractModule {
 
@@ -26,5 +26,7 @@ class Module extends AbstractModule {
     bind(classOf[AppConfig]).asEagerSingleton()
 
     bind(classOf[SendSubmissionToNRSJob]).asEagerSingleton()
+
+    bind(classOf[MonitoringJob]).asEagerSingleton()
   }
 }

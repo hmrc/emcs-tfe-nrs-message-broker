@@ -35,12 +35,12 @@ class SendSubmissionToNRSService @Inject()(lockRepositoryProvider: MongoLockRepo
                                            nrsSubmissionRecordsRepository: NRSSubmissionRecordsRepository,
                                            nrsConnector: NRSConnector,
                                            appConfig: AppConfig
-                                          )(implicit ec: ExecutionContext) extends ScheduledService[Either[JobFailed, String]] with Logging {
+                                          )(implicit ec: ExecutionContext) extends ScheduledService[Either[JobFailed, String]] with Logging with Locking {
 
-  private val jobName = "SendSubmissionToNRSJob"
+  val jobName = "SendSubmissionToNRSJob"
   private lazy val mongoLockTimeoutSeconds: Int = appConfig.getMongoLockTimeoutForJob(jobName)
 
-  private lazy val lockKeeper: LockService = new LockService {
+  lazy val lockKeeper: LockService = new LockService {
     override val lockId: String = s"schedules.$jobName"
     override val ttl: Duration = mongoLockTimeoutSeconds.seconds
     override val lockRepository: LockRepository = lockRepositoryProvider
@@ -74,20 +74,6 @@ class SendSubmissionToNRSService @Inject()(lockRepositoryProvider: MongoLockRepo
           Left(FailedToProcessRecords)
         }
       }
-    }
-  }
-
-  def tryLock(f: => Future[Either[JobFailed, String]]): Future[Either[JobFailed, String]] = {
-    lockKeeper.withLock(f).map {
-      case Some(result) => result
-      case None =>
-        logger.info(s"[$jobName] Locked because it might be running on another instance")
-        Right(s"$jobName - JobAlreadyRunning")
-    }.recover {
-      case e: Exception =>
-        PagerDutyHelper.log("tryLock", MONGO_LOCK_UNKNOWN_EXCEPTION)
-        logger.warn(s"[$jobName] Failed with exception")
-        Left(MongoLockResponses.UnknownException(e))
     }
   }
 

@@ -18,7 +18,7 @@ package scheduler
 
 import org.apache.pekko.actor.{Actor, ActorLogging, Props}
 import scheduler.SchedulingActor._
-import services.SendSubmissionToNRSService
+import services.{MonitoringJobService, SendSubmissionToNRSService}
 import utils.Logging
 
 class SchedulingActor extends Actor with ActorLogging with Logging {
@@ -38,4 +38,5 @@ object SchedulingActor {
   def props: Props = Props[SchedulingActor]()
 
   case class SendSubmissionToNRSMessage(service: SendSubmissionToNRSService) extends ScheduledMessage[Either[JobFailed, String]]
+  case class MonitoringJobMessage(service: MonitoringJobService) extends ScheduledMessage[Either[JobFailed, String]]
 }
