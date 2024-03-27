@@ -19,7 +19,7 @@ object AppDependencies {
 
   val test = Seq(
     "uk.gov.hmrc"             %% s"bootstrap-test$playSuffix"     % bootstrapVersion            % "test, it",
-    "uk.gov.hmrc.mongo"       %% s"hmrc-mongo-test$playSuffix"    % hmrcMongoVersion            % Test,
+    "uk.gov.hmrc.mongo"       %% s"hmrc-mongo-test$playSuffix"    % hmrcMongoVersion            % "it",
     "org.scalamock"           %%  "scalamock"                     % scalamockVersion            % "test"
   )
 }

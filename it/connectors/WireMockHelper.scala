@@ -17,26 +17,33 @@
 package connectors
 
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import org.scalatest.concurrent.{Eventually, IntegrationPatience}
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 
-trait WireMockHelper extends BeforeAndAfterAll with BeforeAndAfterEach {
-  this: Suite =>
+object WireMockHelper extends Eventually with IntegrationPatience {
 
-  protected val server: WireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
+  val wireMockPort: Int = 11111
+  val host: String = "localhost"
+}
 
-  override def beforeAll(): Unit = {
-    server.start()
-    super.beforeAll()
+trait WireMockHelper {
+
+  self: GuiceOneServerPerSuite =>
+
+  import WireMockHelper._
+
+  lazy val wireMockConf: WireMockConfiguration = wireMockConfig.port(wireMockPort)
+  lazy val wireMockServer: WireMockServer = new WireMockServer(wireMockConf)
+
+  def startWireMock(): Unit = {
+    wireMockServer.start()
+    WireMock.configureFor(host, wireMockPort)
   }
 
-  override def beforeEach(): Unit = {
-    server.resetAll()
-    super.beforeEach()
-  }
+  def stopWireMock(): Unit = wireMockServer.stop()
 
-  override def afterAll(): Unit = {
-    super.afterAll()
-    server.stop()
-  }
+  def resetWireMock(): Unit = WireMock.reset()
 }

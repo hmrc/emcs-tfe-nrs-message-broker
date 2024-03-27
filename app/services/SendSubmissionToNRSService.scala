@@ -17,10 +17,14 @@
 package services
 
 import config.AppConfig
-import models.mongo.MongoLockResponses
+import connectors.NRSConnector
+import models.FailedJobResponses.FailedToProcessRecords
+import models.mongo.{MongoLockResponses, NRSSubmissionRecord}
+import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, SENT}
+import repositories.NRSSubmissionRecordsRepository
 import scheduler.{JobFailed, ScheduledService}
 import uk.gov.hmrc.mongo.lock.{LockRepository, LockService, MongoLockRepository}
-import utils.PagerDutyHelper.PagerDutyKeys.MONGO_LOCK_UNKNOWN_EXCEPTION
+import utils.PagerDutyHelper.PagerDutyKeys._
 import utils.{Logging, PagerDutyHelper}
 
 import javax.inject.Inject
@@ -28,13 +32,15 @@ import scala.concurrent.duration.{Duration, DurationInt}
 import scala.concurrent.{ExecutionContext, Future}
 
 class SendSubmissionToNRSService @Inject()(lockRepositoryProvider: MongoLockRepository,
+                                           nrsSubmissionRecordsRepository: NRSSubmissionRecordsRepository,
+                                           nrsConnector: NRSConnector,
                                            appConfig: AppConfig
                                           )(implicit ec: ExecutionContext) extends ScheduledService[Either[JobFailed, String]] with Logging {
 
-  val jobName = "SendSubmissionToNRSJob"
-  lazy val mongoLockTimeoutSeconds: Int = appConfig.getMongoLockTimeoutForJob(jobName)
+  private val jobName = "SendSubmissionToNRSJob"
+  private lazy val mongoLockTimeoutSeconds: Int = appConfig.getMongoLockTimeoutForJob(jobName)
 
-  lazy val lockKeeper: LockService = new LockService {
+  private lazy val lockKeeper: LockService = new LockService {
     override val lockId: String = s"schedules.$jobName"
     override val ttl: Duration = mongoLockTimeoutSeconds.seconds
     override val lockRepository: LockRepository = lockRepositoryProvider
@@ -44,8 +50,30 @@ class SendSubmissionToNRSService @Inject()(lockRepositoryProvider: MongoLockRepo
   override def invoke: Future[Either[JobFailed, String]] = {
     tryLock {
       logger.info(s"[$jobName][invoke] - Job started")
-      //TODO: implement getting all pending or failed records and sending them to NRS
-      Future(Right(""))
+      for {
+        pendingRecords <- nrsSubmissionRecordsRepository.getPendingRecords
+        sentRecords <- Future.sequence {
+          logger.info(s"[invoke] - Retrieved ${pendingRecords.size} pending records to be sent to NRS")
+          submitRecordsToNRS(pendingRecords)
+        }
+        mongoWriteResult <- {
+          if (sentRecords.nonEmpty) {
+            nrsSubmissionRecordsRepository.updateRecords(sentRecords)
+          } else {
+            Future(Right(true))
+          }
+        }
+        isSuccess = sentRecords.forall(_.status == SENT) && mongoWriteResult.isRight
+      } yield {
+        if (isSuccess) {
+          logger.info("[invoke] - Processed all records in batch")
+          Right("Processed all records")
+        } else {
+          PagerDutyHelper.log("invoke", FAILED_TO_PROCESS_RECORD)
+          logger.error(s"[invoke] - Failed to process all records (see previous logs)")
+          Left(FailedToProcessRecords)
+        }
+      }
     }
   }
 
@@ -62,4 +90,21 @@ class SendSubmissionToNRSService @Inject()(lockRepositoryProvider: MongoLockRepo
         Left(MongoLockResponses.UnknownException(e))
     }
   }
+
+  private def submitRecordsToNRS(records: Seq[NRSSubmissionRecord]): Seq[Future[NRSSubmissionRecord]] =
+    records.map { record =>
+      nrsConnector.submit(record.payload).map {
+        _.fold(
+          _ => {
+            logger.warn(s"[invoke] - Received error from NRS for record: ${record.reference}, setting to $FAILED_PENDING_RETRY")
+            PagerDutyHelper.log("invoke", RECORD_SET_TO_FAILED_PENDING_RETRY)
+            record.copy(status = FAILED_PENDING_RETRY)
+          },
+          _ => {
+            logger.debug(s"[invoke] - Success response received from NRS for record: ${record.reference}, setting to $SENT")
+            record.copy(status = SENT)
+          }
+        )
+      }
+    }
 }

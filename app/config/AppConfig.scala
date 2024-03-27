@@ -20,6 +20,8 @@ import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import scala.concurrent.duration.Duration
+
 @Singleton
 class AppConfig @Inject()(servicesConfig: ServicesConfig, config: Configuration) {
 
@@ -32,4 +34,10 @@ class AppConfig @Inject()(servicesConfig: ServicesConfig, config: Configuration)
   def nrsSubmissionUrl: String = s"$nonRepudiationService/submission"
 
   def getMongoLockTimeoutForJob(jobName: String): Int = config.get[Int](s"schedules.$jobName.mongoLockTimeout")
+
+  def mongoTTL: Duration = Duration(config.get[String]("mongodb.ttl"))
+
+  def mongoReplaceIndexes: Boolean = config.get[Boolean]("mongodb.replaceIndexes")
+
+  def numberOfRecordsToRetrieve: Int = config.get[Int]("mongodb.numberOfRecordsToRetrieve")
 }

@@ -18,7 +18,7 @@ package connectors
 
 import fixtures.NRSFixtures
 import mocks.config.MockAppConfig
-import mocks.connector.MockHttpClient
+import mocks.connectors.MockHttpClient
 import models.response.{ErrorResponse, JsonValidationError, NRSSuccessResponse}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture

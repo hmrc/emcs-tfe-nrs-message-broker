@@ -23,13 +23,10 @@ import models.response.UnexpectedDownstreamResponseError
 import play.api.http.Status.{ACCEPTED, INTERNAL_SERVER_ERROR, NOT_FOUND}
 import play.api.libs.json.Json
 import support.IntegrationSpec
-import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class NRSConnectorISpec extends IntegrationSpec with NRSFixtures {
-
-  implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   private lazy val connector: NRSConnector = app.injector.instanceOf[NRSConnector]
 
@@ -39,7 +36,7 @@ class NRSConnectorISpec extends IntegrationSpec with NRSFixtures {
 
     "should return the submission ID when the connector call was successful" in {
 
-      server.stubFor(
+      wireMockServer.stubFor(
         post(urlEqualTo(url))
           .withHeader("X-API-Key", equalTo(testAPIKey))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(nrsPayload))))
@@ -51,7 +48,7 @@ class NRSConnectorISpec extends IntegrationSpec with NRSFixtures {
 
     "must return false when the server responds NOT_FOUND" in {
 
-      server.stubFor(
+      wireMockServer.stubFor(
         post(urlEqualTo(url))
           .withHeader("X-API-Key", equalTo(testAPIKey))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(nrsPayload))))
@@ -63,7 +60,7 @@ class NRSConnectorISpec extends IntegrationSpec with NRSFixtures {
 
     "must fail when the server responds with any other status" in {
 
-      server.stubFor(
+      wireMockServer.stubFor(
         post(urlEqualTo(url))
           .withHeader("X-API-Key", equalTo(testAPIKey))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(nrsPayload))))
@@ -75,7 +72,7 @@ class NRSConnectorISpec extends IntegrationSpec with NRSFixtures {
 
     "must fail when the connection fails" in {
 
-      server.stubFor(
+      wireMockServer.stubFor(
         post(urlEqualTo(url))
           .withHeader("X-API-Key", equalTo(testAPIKey))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(nrsPayload))))

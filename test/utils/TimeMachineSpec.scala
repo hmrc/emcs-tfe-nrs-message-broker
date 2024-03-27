@@ -16,15 +16,17 @@
 
 package utils
 
-import play.api.LoggerLike
+import support.UnitSpec
 
-object PagerDutyHelper {
+import java.time.Instant
 
-  object PagerDutyKeys extends Enumeration {
-    final val MONGO_LOCK_UNKNOWN_EXCEPTION = Value
-    final val RECORD_SET_TO_FAILED_PENDING_RETRY = Value
-    final val FAILED_TO_PROCESS_RECORD = Value
+class TimeMachineSpec extends UnitSpec {
+
+  lazy val fluxCapacitor: TimeMachine = app.injector.instanceOf[TimeMachine]
+
+  "TimeMachine" - {
+    "return instant() as Instant now (allow +- 1 second grace for test execution)" in {
+      fluxCapacitor.now.toEpochMilli shouldBe (Instant.now().toEpochMilli +- 1000)
+    }
   }
-
-  def log(methodName: String, pagerDutyKey: PagerDutyKeys.Value)(implicit logger: LoggerLike): Unit = logger.warn(s"$pagerDutyKey - $methodName")
 }
