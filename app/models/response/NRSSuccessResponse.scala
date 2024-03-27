@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-package config
+package models.response
 
-import support.UnitSpec
+import play.api.libs.json.{Format, Json}
 
-class AppConfigSpec extends UnitSpec {
+case class NRSSuccessResponse(nrSubmissionId: String)
 
-  lazy val config: AppConfig = app.injector.instanceOf[AppConfig]
-
-  "AppConfig" - {
-
-    "when calling getMongoLockTimeoutForJob" - {
-
-      "should return the correct value for 'SendSubmissionToNRSJob'" in {
-        config.getMongoLockTimeoutForJob("SendSubmissionToNRSJob") shouldBe 7200
-      }
-    }
-  }
+object NRSSuccessResponse {
+  implicit val format: Format[NRSSuccessResponse] = Json.format[NRSSuccessResponse]
 }

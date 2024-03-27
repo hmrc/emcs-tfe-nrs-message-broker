@@ -14,21 +14,8 @@
  * limitations under the License.
  */
 
-package config
+package utils
 
-import support.UnitSpec
-
-class AppConfigSpec extends UnitSpec {
-
-  lazy val config: AppConfig = app.injector.instanceOf[AppConfig]
-
-  "AppConfig" - {
-
-    "when calling getMongoLockTimeoutForJob" - {
-
-      "should return the correct value for 'SendSubmissionToNRSJob'" in {
-        config.getMongoLockTimeoutForJob("SendSubmissionToNRSJob") shouldBe 7200
-      }
-    }
-  }
+object Constants {
+  val X_API_KEY = "X-API-Key"
 }
