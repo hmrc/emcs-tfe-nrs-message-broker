@@ -45,7 +45,7 @@ class NRSPayloadControllerSpec extends UnitSpec
     val controller  = new NRSPayloadController(Helpers.stubControllerComponents(), mockNRSSubmissionRecordsRepository, mockTimeMachine, mockUUIDGenerator, authAction)
   }
 
-  s"POST ${routes.NRSPayloadController.insertRecord(testErn)}" - {
+  s"PUT ${routes.NRSPayloadController.insertRecord(testErn)}" - {
 
     "when the user is authorised" - {
       s"must return ${Status.ACCEPTED} (ACCEPTED)" - {
@@ -56,6 +56,7 @@ class NRSPayloadControllerSpec extends UnitSpec
           val result = controller.insertRecord(testErn)(fakeRequest)
 
           status(result) shouldBe Status.ACCEPTED
+          contentAsJson(result) shouldBe Json.obj("reference" -> nrsRecord.reference)
         }
       }
 

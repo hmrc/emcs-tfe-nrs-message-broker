@@ -19,7 +19,7 @@ package controllers
 import controllers.actions.{AuthAction, AuthActionHelper}
 import models.mongo.NRSSubmissionRecord
 import models.request.NRSPayload
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import repositories.NRSSubmissionRecordsRepository
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -40,7 +40,7 @@ class NRSPayloadController @Inject()(cc: ControllerComponents,
       nrsPayload =>
         val submissionRecord = NRSSubmissionRecord(payload = nrsPayload, updatedAt = timeMachine.now, reference = uuidGenerator.uuidAsString)
         nrsSubmissionRecordsRepository.insertRecord(submissionRecord)
-          .map(_ => Accepted(""))
+          .map(_ => Accepted(Json.obj("reference" -> submissionRecord.reference)))
           .recover {
             case e =>
               logger.warn(s"[insertRecord] Failed to insert NRS payload with error: ${e.getMessage.take(10000)}")
