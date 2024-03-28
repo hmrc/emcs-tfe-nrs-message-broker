@@ -21,5 +21,4 @@ import play.api.mvc.{Request, WrappedRequest}
 case class UserRequest[A](request: Request[A],
                           ern: String,
                           internalId: String,
-                          credId: String,
-                          allUserERNs: Set[String]) extends WrappedRequest[A](request)
+                          credId: String) extends WrappedRequest[A](request)

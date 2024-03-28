@@ -27,10 +27,7 @@ It uses Apache Pekko to run scheduled jobs at configured intervals (see [applica
 
 </details>
 
-## Scheduled jobs
-
-<details>
-<summary>What each job has/does</summary>
+## Job specification and overview
 
 Each job is defined in [application.conf](conf/application.conf) and contains 4 distinct entries:
 
@@ -43,8 +40,9 @@ Pekko invokes each jobs `invoke` ([code](app/scheduler/ScheduledService.scala)) 
 
 `tryLock` uses the [HMRC Mongo lock](https://github.com/hmrc/hmrc-mongo?tab=readme-ov-file#lock) mechanism.
 
-Once a lock is obtained for the job, the contents of the `invoke` method are ran. Once the job is complete, the lock is released (by deleting the record from the `lock` collection in Mongo). 
-</details>
+Once a lock is obtained for the job, the contents of the `invoke` method are ran. Once the job is complete, the lock is released (by deleting the record from the `lock` collection in Mongo).
+
+## Scheduled jobs
 
 <details>
 

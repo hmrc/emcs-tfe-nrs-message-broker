@@ -23,6 +23,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import repositories.NRSSubmissionRecordsRepository
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import utils.Constants.ERROR_MESSAGE_LOG_LIMIT
 import utils.{Logging, TimeMachine, UUIDGenerator}
 
 import javax.inject.Inject
@@ -43,7 +44,7 @@ class NRSPayloadController @Inject()(cc: ControllerComponents,
           .map(_ => Accepted(Json.obj("reference" -> submissionRecord.reference)))
           .recover {
             case e =>
-              logger.warn(s"[insertRecord] Failed to insert NRS payload with error: ${e.getMessage.take(10000)}")
+              logger.warn(s"[insertRecord] Failed to insert NRS payload with error: ${e.getMessage.take(ERROR_MESSAGE_LOG_LIMIT)}")
               InternalServerError("Failed to insert NRS payload")
           }
     }

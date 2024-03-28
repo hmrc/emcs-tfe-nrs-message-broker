@@ -18,4 +18,5 @@ package utils
 
 object Constants {
   val X_API_KEY = "X-API-Key"
+  val ERROR_MESSAGE_LOG_LIMIT = 10000
 }
