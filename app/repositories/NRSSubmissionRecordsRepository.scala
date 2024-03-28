@@ -29,7 +29,8 @@ import scheduler.JobFailed
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
-import utils.{Logging, TimeMachine}
+import utils.Logging
+import utils.generators.TimeMachine
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit

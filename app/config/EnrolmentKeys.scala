@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package utils
+package config
 
-import support.UnitSpec
+object EnrolmentKeys {
 
-import java.time.Instant
+  val EMCS_ENROLMENT = "HMRC-EMCS-ORG"
+  val ERN = "ExciseNumber"
+  val ACTIVATED = "activated"
+  val INACTIVE = "inactive"
 
-class TimeMachineSpec extends UnitSpec {
-
-  lazy val fluxCapacitor: TimeMachine = app.injector.instanceOf[TimeMachine]
-
-  "TimeMachine" - {
-    "return instant() as Instant now (allow +- 1 second grace for test execution)" in {
-      fluxCapacitor.now.toEpochMilli shouldBe (Instant.now().toEpochMilli +- 1000)
-    }
-  }
 }

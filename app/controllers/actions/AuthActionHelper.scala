@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package utils
+package controllers.actions
 
-import java.time.Instant
-import javax.inject.{Inject, Singleton}
+import models.auth.UserRequest
+import play.api.libs.json.JsValue
+import play.api.mvc.{Action, BaseControllerHelpers, Result}
 
-@Singleton
-class TimeMachine @Inject() {
-  def now: Instant = Instant.now()
+import scala.concurrent.Future
+
+trait AuthActionHelper extends BaseControllerHelpers {
+
+  val auth: AuthAction
+
+  def authorisedUserSubmissionRequest(ern: String)(block: UserRequest[JsValue] => Future[Result]): Action[JsValue] =
+    auth(ern).async(parse.json)(block)
 }

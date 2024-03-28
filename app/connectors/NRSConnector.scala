@@ -21,7 +21,7 @@ import models.request.NRSPayload
 import models.response.{ErrorResponse, NRSSuccessResponse, UnexpectedDownstreamResponseError}
 import play.api.libs.json.Reads
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
-import utils.Constants.X_API_KEY
+import utils.Constants.{ERROR_MESSAGE_LOG_LIMIT, X_API_KEY}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,7 +40,7 @@ class NRSConnector @Inject()(val http: HttpClient,
     val headerCarrierWithAPIKey = HeaderCarrier(extraHeaders = Seq(X_API_KEY -> apiKey))
     post(submissionUrl, payload)(headerCarrierWithAPIKey, implicitly, implicitly).recover {
       case error =>
-        logger.warn(s"[submit] Unexpected error from NRS: ${error.getClass} ${error.getMessage.take(10000)}")
+        logger.warn(s"[submit] Unexpected error from NRS: ${error.getClass} ${error.getMessage.take(ERROR_MESSAGE_LOG_LIMIT)}")
         Left(UnexpectedDownstreamResponseError)
     }
   }

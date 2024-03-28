@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,13 @@
  * limitations under the License.
  */
 
-package config
+package fixtures
 
-import com.google.inject.AbstractModule
-import controllers.actions.{AuthAction, AuthActionImpl}
-import scheduler.jobs.{MonitoringJob, SendSubmissionToNRSJob}
+trait BaseFixtures {
 
-class Module extends AbstractModule {
+  val testErn: String = "GBWK123456789"
 
-  override def configure(): Unit = {
+  val testCredId: String = "cred1234567891"
 
-    bind(classOf[AppConfig]).asEagerSingleton()
-
-    bind(classOf[SendSubmissionToNRSJob]).asEagerSingleton()
-
-    bind(classOf[AuthAction]).to(classOf[AuthActionImpl]).asEagerSingleton()
-
-    bind(classOf[MonitoringJob]).asEagerSingleton()
-  }
+  val testInternalId: String = "int1234567891"
 }

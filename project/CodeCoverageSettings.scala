@@ -12,7 +12,8 @@ object CodeCoverageSettings {
     ".*Routes.*",
     "testOnly.*",
     "testOnlyDoNotUseInAppConf.*",
-    ".*scheduler.*"
+    ".*scheduler.*",
+    ".*utils.generators*"
   )
 
   val settings: Seq[Setting[_]] = Seq(
