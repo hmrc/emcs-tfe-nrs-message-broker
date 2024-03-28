@@ -18,7 +18,7 @@ package repositories
 
 import com.google.inject.ImplementedBy
 import config.AppConfig
-import models.mongo.MongoOperationResponses.BulkWriteFailure
+import models.mongo.MongoOperationResponses.{BulkDeleteFailure, BulkWriteFailure}
 import models.mongo.{NRSSubmissionRecord, RecordStatusEnum}
 import org.mongodb.scala.BulkWriteResult
 import org.mongodb.scala.model.Filters.{equal, in}
@@ -47,6 +47,8 @@ trait NRSSubmissionRecordsRepository {
   def updateRecords(records: Seq[NRSSubmissionRecord]): Future[Either[JobFailed, Boolean]]
 
   def countRecordsByStatus(status: RecordStatusEnum.Value): Future[Long]
+
+  def deleteRecords(records: Seq[NRSSubmissionRecord]): Future[Either[JobFailed, Boolean]]
 }
 
 @Singleton
@@ -97,6 +99,23 @@ class NRSSubmissionRecordsRepositoryImpl @Inject()(mongoComponent: MongoComponen
       )
       .toFuture()
       .flatMap(bulkWriteResultHandlerForUpdates(records, _))
+  }
+
+  def deleteRecords(records: Seq[NRSSubmissionRecord]): Future[Either[JobFailed, Boolean]] = {
+
+    logger.info(s"[deleteRecords] - Deleting ${records.size} records in Mongo")
+
+    val allReferences = records.map(_.reference)
+
+    collection
+      .deleteMany(Filters.in(referenceField, allReferences: _*))
+      .toFuture()
+      .map(_ => Right(true))
+      .recover {
+        case e =>
+          logger.warn(s"[deleteRecords] - Failed to delete all records provided with error: ${e.getMessage.take(10000)}")
+          Left(BulkDeleteFailure(e))
+      }
   }
 
   def countRecordsByStatus(status: RecordStatusEnum.Value): Future[Long] = collection.countDocuments(equal("status", status.toString)).toFuture()

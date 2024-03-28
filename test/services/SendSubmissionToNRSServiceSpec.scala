@@ -16,13 +16,12 @@
 
 package services
 
-import com.mongodb.bulk.BulkWriteResult
 import fixtures.{LockFixtures, NRSFixtures}
 import mocks.config.MockAppConfig
 import mocks.connectors.MockNRSConnector
 import mocks.repositories.MockNRSSubmissionRecordsRepository
 import models.FailedJobResponses.FailedToProcessRecords
-import models.mongo.MongoOperationResponses.BulkWriteFailure
+import models.mongo.MongoOperationResponses.BulkDeleteFailure
 import models.mongo.NRSSubmissionRecord
 import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, PERMANENTLY_FAILED, SENT}
 import models.response.{Downstream4xxError, UnexpectedDownstreamResponseError}
@@ -86,7 +85,7 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
         MockedNRSConnector.submit(records.head.payload).returns(Future.successful(Right(nrsSuccessResponseModel)))
         MockedNRSConnector.submit(records(1).payload).returns(Future.successful(Right(nrsSuccessResponseModel)))
 
-        MockedNRSSubmissionRecordsRepository.updateRecords(records.map(_.copy(status = SENT))).returns(Future.successful(Right(true)))
+        MockedNRSSubmissionRecordsRepository.deleteRecords(records.map(_.copy(status = SENT))).returns(Future.successful(Right(true)))
 
         val result: Either[JobFailed, String] = service.invoke.futureValue
         result shouldBe Right("Processed all records")
@@ -121,7 +120,8 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
         MockedNRSConnector.submit(records.head.payload).returns(Future.successful(Right(nrsSuccessResponseModel)))
         MockedNRSConnector.submit(records(1).payload).returns(Future.successful(Left(UnexpectedDownstreamResponseError)))
 
-        MockedNRSSubmissionRecordsRepository.updateRecords(Seq(records.head.copy(status = SENT), records(1).copy(status = FAILED_PENDING_RETRY))).returns(Future.successful(Right(true)))
+        MockedNRSSubmissionRecordsRepository.deleteRecords(Seq(records.head.copy(status = SENT))).returns(Future.successful(Right(true)))
+        MockedNRSSubmissionRecordsRepository.updateRecords(Seq(records(1).copy(status = FAILED_PENDING_RETRY))).returns(Future.successful(Right(true)))
 
         withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
           val result: Either[JobFailed, String] = service.invoke.futureValue
@@ -158,7 +158,8 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
         MockedNRSConnector.submit(records.head.payload).returns(Future.successful(Right(nrsSuccessResponseModel)))
         MockedNRSConnector.submit(records(1).payload).returns(Future.successful(Left(Downstream4xxError)))
 
-        MockedNRSSubmissionRecordsRepository.updateRecords(Seq(records.head.copy(status = SENT), records(1).copy(status = PERMANENTLY_FAILED))).returns(Future.successful(Right(true)))
+        MockedNRSSubmissionRecordsRepository.deleteRecords(Seq(records.head.copy(status = SENT))).returns(Future.successful(Right(true)))
+        MockedNRSSubmissionRecordsRepository.updateRecords(Seq(records(1).copy(status = PERMANENTLY_FAILED))).returns(Future.successful(Right(true)))
 
         withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
           val result: Either[JobFailed, String] = service.invoke.futureValue
@@ -170,14 +171,27 @@ class SendSubmissionToNRSServiceSpec extends UnitSpec
         }
       }
 
-      "when all records are sent to NRS but fail to get updated in Mongo" in new Setup {
+      "when all records sent to NRS fail and fail to get deleted in Mongo" in new Setup {
+
+        MockedNRSSubmissionRecordsRepository.getPendingRecords.returns(Future.successful(records))
+
+        MockedNRSConnector.submit(records.head.payload).returns(Future.successful(Left(UnexpectedDownstreamResponseError)))
+        MockedNRSConnector.submit(records(1).payload).returns(Future.successful(Left(UnexpectedDownstreamResponseError)))
+
+        MockedNRSSubmissionRecordsRepository.updateRecords(records.map(_.copy(status = FAILED_PENDING_RETRY))).returns(Future.successful(Left(BulkDeleteFailure(new Exception("Bears. Beets. Battlestar Galatica.")))))
+
+        val result: Either[JobFailed, String] = service.invoke.futureValue
+        result shouldBe Left(FailedToProcessRecords)
+      }
+
+      "when all records are sent to NRS but fail to get deleted in Mongo" in new Setup {
 
         MockedNRSSubmissionRecordsRepository.getPendingRecords.returns(Future.successful(records))
 
         MockedNRSConnector.submit(records.head.payload).returns(Future.successful(Right(nrsSuccessResponseModel)))
         MockedNRSConnector.submit(records(1).payload).returns(Future.successful(Right(nrsSuccessResponseModel)))
 
-        MockedNRSSubmissionRecordsRepository.updateRecords(records.map(_.copy(status = SENT))).returns(Future.successful(Left(BulkWriteFailure(BulkWriteResult.unacknowledged()))))
+        MockedNRSSubmissionRecordsRepository.deleteRecords(records.map(_.copy(status = SENT))).returns(Future.successful(Left(BulkDeleteFailure(new Exception("Bears. Beets. Battlestar Galatica.")))))
 
         withCaptureOfLoggingFrom(service.logger) { capturedLogEvents =>
           val result: Either[JobFailed, String] = service.invoke.futureValue

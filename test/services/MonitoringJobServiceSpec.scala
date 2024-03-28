@@ -19,7 +19,7 @@ package services
 import fixtures.{LockFixtures, NRSFixtures}
 import mocks.config.MockAppConfig
 import mocks.repositories.MockNRSSubmissionRecordsRepository
-import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, PERMANENTLY_FAILED, SENT}
+import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, PERMANENTLY_FAILED}
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
@@ -62,14 +62,12 @@ class MonitoringJobServiceSpec extends UnitSpec
         MockedAppConfig.getMongoLockTimeoutForJob(jobName).returns(mongoLockTimeout)
 
         MockedNRSSubmissionRecordsRepository.countRecordsByStatus(PENDING).returns(Future.successful(1))
-        MockedNRSSubmissionRecordsRepository.countRecordsByStatus(SENT).returns(Future.successful(2))
         MockedNRSSubmissionRecordsRepository.countRecordsByStatus(FAILED_PENDING_RETRY).returns(Future.successful(3))
         MockedNRSSubmissionRecordsRepository.countRecordsByStatus(PERMANENTLY_FAILED).returns(Future.successful(4))
 
         withCaptureOfLoggingFrom(service.logger) { logs =>
           val result: Either[JobFailed, String] = service.invoke.futureValue
           logs.exists(_.getMessage == "[MonitoringJobService][invoke] - Count of Pending records: 1") shouldBe true
-          logs.exists(_.getMessage == "[MonitoringJobService][invoke] - Count of Sent records: 2") shouldBe true
           logs.exists(_.getMessage == "[MonitoringJobService][invoke] - Count of Failed Pending Retry records: 3") shouldBe true
           logs.exists(_.getMessage == "[MonitoringJobService][invoke] - Count of Permanently Failed records: 4") shouldBe true
           result shouldBe Right("Successfully ran monitoring job")

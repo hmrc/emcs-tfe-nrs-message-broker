@@ -57,14 +57,11 @@ class SendSubmissionToNRSService @Inject()(lockRepositoryProvider: MongoLockRepo
           logger.info(s"[invoke] - Retrieved ${pendingRecords.size} pending records to be sent to NRS")
           submitRecordsToNRS(pendingRecords)
         }
-        mongoWriteResult <- {
-          if (sentRecords.nonEmpty) {
-            nrsSubmissionRecordsRepository.updateRecords(sentRecords)
-          } else {
-            Future(Right(true))
-          }
-        }
-        isSuccess = sentRecords.forall(_.status == SENT) && mongoWriteResult.isRight
+        recordsToDelete = sentRecords.filter(_.status == SENT)
+        recordsToUpdate = sentRecords.filterNot(_.status == SENT)
+        mongoDeleteResult <- if (recordsToDelete.nonEmpty) nrsSubmissionRecordsRepository.deleteRecords(recordsToDelete) else Future(Right(true))
+        mongoWriteResult <- if (recordsToUpdate.nonEmpty) nrsSubmissionRecordsRepository.updateRecords(recordsToUpdate) else Future(Right(true))
+        isSuccess = sentRecords.forall(_.status == SENT) && mongoWriteResult.isRight && mongoDeleteResult.isRight
       } yield {
         if (isSuccess) {
           logger.info("[invoke] - Processed all records in batch")

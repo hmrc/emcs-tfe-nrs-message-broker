@@ -39,6 +39,10 @@ trait MockNRSSubmissionRecordsRepository extends MockFactory {
       (mockNRSSubmissionRecordsRepository.updateRecords(_: Seq[NRSSubmissionRecord]))
         .expects(updatedRecords)
 
+    def deleteRecords(recordsToDelete: Seq[NRSSubmissionRecord]): CallHandler1[Seq[NRSSubmissionRecord], Future[Either[JobFailed, Boolean]]] =
+      (mockNRSSubmissionRecordsRepository.deleteRecords(_: Seq[NRSSubmissionRecord]))
+        .expects(recordsToDelete)
+
     def countRecordsByStatus(status: RecordStatusEnum.Value): CallHandler1[RecordStatusEnum.Value, Future[Long]] = (mockNRSSubmissionRecordsRepository.countRecordsByStatus(_: RecordStatusEnum.Value)).expects(status)
   }
 

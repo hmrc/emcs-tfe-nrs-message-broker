@@ -142,6 +142,27 @@ class NRSSubmissionRecordsRepositoryISpec extends RepositoryBaseSpec[NRSSubmissi
     }
   }
 
+  "updateRecords" - {
+
+    "should return Right(true)" - {
+
+      "all records are deleted successfully" in {
+
+        val records = Seq(
+          NRSSubmissionRecord(nrsPayload, status = FAILED_PENDING_RETRY, reference = "ref2", updatedAt = instantNow),
+          NRSSubmissionRecord(nrsPayload, status = FAILED_PENDING_RETRY, reference = "ref4", updatedAt = instantNow)
+        )
+
+        await(repository.collection.insertMany(records).toFuture())
+
+        await(repository.deleteRecords(records.map(_.copy(status = SENT)))) mustBe Right(true)
+
+        await(repository.collection.countDocuments().toFuture()) mustBe 0
+      }
+
+    }
+  }
+
   "countRecordsByStatus" - {
 
     "count all the records in the specified status" in {
