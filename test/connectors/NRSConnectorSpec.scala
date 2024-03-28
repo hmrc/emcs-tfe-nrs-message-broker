@@ -19,7 +19,7 @@ package connectors
 import fixtures.NRSFixtures
 import mocks.config.MockAppConfig
 import mocks.connectors.MockHttpClient
-import models.response.{ErrorResponse, JsonValidationError, NRSSuccessResponse}
+import models.response.{Downstream4xxError, ErrorResponse, JsonValidationError, NRSSuccessResponse}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import support.UnitSpec
@@ -57,6 +57,11 @@ class NRSConnectorSpec extends UnitSpec
     }
 
     "should return an error response" - {
+
+      "when downstream call fails (due to a 4xx error)" in new Setup(Left(Downstream4xxError)) {
+
+        connector.submit(nrsPayload).futureValue shouldBe Left(Downstream4xxError)
+      }
 
       "when downstream call fails" in new Setup(Left(JsonValidationError)) {
 
