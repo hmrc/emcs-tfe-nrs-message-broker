@@ -19,7 +19,7 @@ package controllers
 import controllers.actions.{AuthAction, FakeAuthAction}
 import fixtures.{BaseFixtures, NRSFixtures}
 import mocks.repositories.MockNRSSubmissionRecordsRepository
-import mocks.utils.{FakeTimeMachine, FakeUUIDGenerator}
+import mocks.utils.generators.{FakeTimeMachine, FakeUUIDGenerator}
 import models.mongo.NRSSubmissionRecord
 import play.api.http.Status
 import play.api.libs.json.Json

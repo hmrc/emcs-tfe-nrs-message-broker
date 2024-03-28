@@ -24,7 +24,8 @@ import play.api.mvc.{Action, ControllerComponents}
 import repositories.NRSSubmissionRecordsRepository
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.Constants.ERROR_MESSAGE_LOG_LIMIT
-import utils.{Logging, TimeMachine, UUIDGenerator}
+import utils.generators.{TimeMachine, UUIDGenerator}
+import utils.Logging
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext

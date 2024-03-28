@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package mocks.utils
+package utils.generators
 
-import utils.TimeMachine
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+@Singleton
+class UUIDGenerator @Inject() {
 
-trait FakeTimeMachine {
-
-  val instantNow: Instant = Instant.now.truncatedTo(ChronoUnit.MILLIS)
-
-  val mockTimeMachine: TimeMachine = new TimeMachine {
-    override def now: Instant = instantNow
-  }
+  def uuidAsString: String = UUID.randomUUID().toString
 
 }

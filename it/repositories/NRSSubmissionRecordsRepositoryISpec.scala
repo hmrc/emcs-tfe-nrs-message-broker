@@ -2,7 +2,7 @@ package repositories
 
 import com.mongodb.bulk.BulkWriteResult
 import fixtures.NRSFixtures
-import mocks.utils.FakeTimeMachine
+import mocks.utils.generators.FakeTimeMachine
 import models.mongo.MongoOperationResponses.BulkWriteFailure
 import models.mongo.NRSSubmissionRecord
 import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, SENT}

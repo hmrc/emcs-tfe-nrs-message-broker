@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package utils
+package mocks.utils.generators
 
-import support.UnitSpec
+import utils.generators.UUIDGenerator
 
-class UUIDGeneratorSpec extends UnitSpec {
+trait FakeUUIDGenerator {
 
-  val uuidGenerator = new UUIDGenerator
+  val uuid: String = "uuid-1"
 
-  "UUIDGenerator" - {
-    "should generate ids that are uuids" in {
-      uuidGenerator.uuidAsString should fullyMatch regex """([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})""".r
-    }
+  val mockUUIDGenerator: UUIDGenerator = new UUIDGenerator {
+    override def uuidAsString: String = uuid
   }
 }

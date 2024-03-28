@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package utils
+package mocks.utils.generators
 
-import support.UnitSpec
+import utils.generators.TimeMachine
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
-class TimeMachineSpec extends UnitSpec {
+trait FakeTimeMachine {
 
-  lazy val fluxCapacitor: TimeMachine = app.injector.instanceOf[TimeMachine]
+  val instantNow: Instant = Instant.now.truncatedTo(ChronoUnit.MILLIS)
 
-  "TimeMachine" - {
-    "return instant() as Instant now (allow +- 1 second grace for test execution)" in {
-      fluxCapacitor.now.toEpochMilli shouldBe (Instant.now().toEpochMilli +- 1000)
-    }
+  val mockTimeMachine: TimeMachine = new TimeMachine {
+    override def now: Instant = instantNow
   }
+
 }

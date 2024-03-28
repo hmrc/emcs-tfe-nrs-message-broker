@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package mocks.utils
+package utils.generators
 
-import utils.UUIDGenerator
+import java.time.Instant
+import javax.inject.{Inject, Singleton}
 
-trait FakeUUIDGenerator {
-
-  val uuid: String = "uuid-1"
-
-  val mockUUIDGenerator: UUIDGenerator = new UUIDGenerator {
-    override def uuidAsString: String = uuid
-  }
+@Singleton
+class TimeMachine @Inject() {
+  def now: Instant = Instant.now()
 }
