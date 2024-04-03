@@ -23,4 +23,6 @@ object MongoOperationResponses {
 
   case class BulkWriteFailure(writeResult: BulkWriteResult) extends JobFailed
 
+  case class BulkDeleteFailure(throwable: Throwable) extends JobFailed
+
 }

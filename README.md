@@ -55,11 +55,14 @@ This job is configured in [application.conf](conf/application.conf) under the `S
 The `invoke` method ([code](app/services/SendSubmissionToNRSService.scala)) picks up any records in the [`PENDING` or `FAILED_PENDING_RETRY`](app/models/mongo/RecordStatusEnum.scala) state.
 The number of records returned is limited to a configurable value (see `numberOfRecordsToRetrieve` in [application.conf](conf/application.conf)).
 
-It then sends all of these records (sequentially but with no pre-determined delay) to NRS and if an `OK` response is returned with a `nrSubmissionId` ([see response model](app/models/response/NRSSuccessResponse.scala)) then the record is set to `SENT`.
+It then sends all of these records (sequentially but with no pre-determined delay) to NRS and if an `OK` response is returned with a `nrSubmissionId` ([see response model](app/models/response/NRSSuccessResponse.scala)) then the record is set to `SENT`
+in application memory and subsequently deleted from Mongo.
 
-If NRS does not return the expected `OK` response then the record is set to `FAILED_PENDING_RETRY` and will be picked up in the next run.
+When a 5xx response is returned from NRS, the record is set to `FAILED_PENDING_RETRY` and will be retried on the next scheduled run.
 
-Once all the records have been sent (successfully or not), the results are reflected in Mongo (with each records `updatedAt` timestamp updated).
+When a 4xx response is returned from NRS, the record is set to `PERMANENTLY_FAILED` and will NOT be retried. A 4xx response should not occur in production and should be investigated manually.
+
+Once all the records have been sent, the results are reflected in Mongo (with each records `updatedAt` timestamp updated). All successfully sent records are deleted from Mongo.
 
 The TTL on each record is 30 days since it was last updated (to cover any outages).
 
@@ -73,7 +76,7 @@ The TTL on each record is 30 days since it was last updated (to cover any outage
 
 This job is configured in [application.conf](conf/application.conf) under the `MonitoringJob` object.
 
-The `invoke` method ([code](app/services/MonitoringJobService.scala)) simply calls Mongo to count any records in the [`PENDING`, `SENT` or `FAILED_PENDING_RETRY`](app/models/mongo/RecordStatusEnum.scala) state and logs the result.
+The `invoke` method ([code](app/services/MonitoringJobService.scala)) simply calls Mongo to count any records in the [`PENDING`, `PERMANENTLY_FAILED` or `FAILED_PENDING_RETRY`](app/models/mongo/RecordStatusEnum.scala) state and logs the result.
 
 </details>
 
