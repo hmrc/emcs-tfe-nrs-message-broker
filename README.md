@@ -58,7 +58,9 @@ The number of records returned is limited to a configurable value (see `numberOf
 It then sends all of these records (sequentially but with no pre-determined delay) to NRS and if an `OK` response is returned with a `nrSubmissionId` ([see response model](app/models/response/NRSSuccessResponse.scala)) then the record is set to `SENT`
 in application memory and subsequently deleted from Mongo.
 
-If NRS does not return the expected `OK` response then the record is set to `FAILED_PENDING_RETRY` and will be picked up in the next run.
+When a 5xx response is returned from NRS, the record is set to `FAILED_PENDING_RETRY` and will be retried on the next scheduled run.
+
+When a 4xx response is returned from NRS, the record is set to `PERMANENTLY_FAILED` and will NOT be retried. A 4xx response should not occur in production and should be investigated manually.
 
 Once all the records have been sent, the results are reflected in Mongo (with each records `updatedAt` timestamp updated). All successfully sent records are deleted from Mongo.
 
