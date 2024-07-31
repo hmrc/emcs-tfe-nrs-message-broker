@@ -19,7 +19,7 @@ package connectors
 import config.AppConfig
 import models.request.NRSPayload
 import models.response.{ErrorResponse, NRSSuccessResponse, UnexpectedDownstreamResponseError}
-import play.api.libs.json.Reads
+import play.api.libs.json.{Json, Reads}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import utils.Constants.{ERROR_MESSAGE_LOG_LIMIT, X_API_KEY}
 
@@ -38,6 +38,7 @@ class NRSConnector @Inject()(val http: HttpClient,
 
   def submit(payload: NRSPayload)(implicit ec: ExecutionContext): Future[Either[ErrorResponse, NRSSuccessResponse]] = {
     val headerCarrierWithAPIKey = HeaderCarrier(extraHeaders = Seq(X_API_KEY -> apiKey))
+    logger.debug(s"[submit] Sending following payload to NRS:\n\n ${Json.toJson(payload)}")
     post(submissionUrl, payload)(headerCarrierWithAPIKey, implicitly, implicitly).recover {
       case error =>
         logger.warn(s"[submit] Unexpected error from NRS: ${error.getClass} ${error.getMessage.take(ERROR_MESSAGE_LOG_LIMIT)}")

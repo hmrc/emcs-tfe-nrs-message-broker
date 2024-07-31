@@ -29,7 +29,7 @@ trait Logging {
     private lazy val prefixLog: String => String = msg =>
       s"[$className]${if (msg.startsWith("[")) msg else " " + msg}"
 
-    override val logger: Logger = LoggerFactory.getLogger(loggerName)
+    override val logger: Logger = LoggerFactory.getLogger("application." + loggerName)
 
     override def debug(message: => String)(implicit mc: MarkerContext): Unit = super.debug(prefixLog(message))
     override def info(message: => String)(implicit mc: MarkerContext): Unit = super.info(prefixLog(message))
