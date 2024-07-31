@@ -27,7 +27,7 @@ class LoggingSpec extends PlaySpec with LogCapturing {
   object TestLogging extends Logging
 
   "have the logger configured correctly" in {
-    TestLogging.logger.logger.getName mustBe s"utils.LoggingSpec$$TestLogging"
+    TestLogging.logger.logger.getName mustBe s"application.utils.LoggingSpec$$TestLogging"
   }
 
   "when logging" must {
