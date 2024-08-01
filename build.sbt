@@ -17,8 +17,17 @@ lazy val microservice = Project("emcs-tfe-nrs-message-broker", file("."))
   .settings(CodeCoverageSettings.settings: _*)
   .settings(PlayKeys.playDefaultPort := 8315)
   .settings(inConfig(Test)(testSettings): _*)
-  .configs(IntegrationTest)
-  .settings(inConfig(IntegrationTest)(itSettings): _*)
+  .configs(ItTest)
+  .settings(inConfig(ItTest)(Defaults.itSettings ++ headerSettings(ItTest) ++ automateHeaderSettings(ItTest)): _*)
+  .settings(
+    ItTest / fork := true,
+    ItTest / unmanagedSourceDirectories := Seq((ItTest / baseDirectory).value / "it"),
+    ItTest / unmanagedClasspath += baseDirectory.value / "resources",
+    Runtime / unmanagedClasspath += baseDirectory.value / "resources",
+    ItTest / javaOptions += "-Dlogger.resource=logback-test.xml",
+    ItTest / parallelExecution := false,
+    addTestReportOption(ItTest, "int-test-reports")
+  )
 
 lazy val testSettings: Seq[Def.Setting[_]] = Seq(
   fork := true,

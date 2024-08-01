@@ -19,12 +19,13 @@ package mocks.repositories
 import models.mongo.{NRSSubmissionRecord, RecordStatusEnum}
 import org.scalamock.handlers.{CallHandler0, CallHandler1}
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 import repositories.NRSSubmissionRecordsRepository
 import scheduler.JobFailed
 
 import scala.concurrent.Future
 
-trait MockNRSSubmissionRecordsRepository extends MockFactory {
+trait MockNRSSubmissionRecordsRepository extends MockFactory { this: TestSuite =>
 
   lazy val mockNRSSubmissionRecordsRepository: NRSSubmissionRecordsRepository = mock[NRSSubmissionRecordsRepository]
 
