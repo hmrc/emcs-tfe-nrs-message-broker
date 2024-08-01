@@ -19,8 +19,10 @@ package mocks.config
 import config.AppConfig
 import org.scalamock.handlers.{CallHandler0, CallHandler1}
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 
-trait MockAppConfig extends MockFactory {
+
+trait MockAppConfig extends MockFactory { this: TestSuite =>
   lazy val mockAppConfig: AppConfig = mock[AppConfig]
 
   object MockedAppConfig {

@@ -21,10 +21,11 @@ import models.request.NRSPayload
 import models.response.{ErrorResponse, NRSSuccessResponse}
 import org.scalamock.handlers.CallHandler2
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait MockNRSConnector extends MockFactory {
+trait MockNRSConnector extends MockFactory { this: TestSuite =>
 
   lazy val mockNRSConnector: NRSConnector = mock[NRSConnector]
 
