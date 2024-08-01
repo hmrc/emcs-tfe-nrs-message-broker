@@ -33,13 +33,16 @@ trait NRSHttpParser[A] extends BaseConnectorUtils[A] {
             case Some(valid) => Right(valid)
             case None =>
               logger.warn(s"[read] Bad JSON response from NRS")
+              logger.debug(s"[read] Bad JSON response body: ${response.body}")
               Left(JsonValidationError)
           }
           case status if status >= 400 && status <= 499 =>
             logger.warn(s"[read] Received 4xx status NRS. Response status: $status")
+            logger.debug(s"[read] 4xx response body: ${response.body}")
             Left(Downstream4xxError)
           case status =>
             logger.warn(s"[read] Unexpected status from NRS: $status")
+            logger.debug(s"[read] 5xx response body: ${response.body}")
             Left(UnexpectedDownstreamResponseError)
         }
       }

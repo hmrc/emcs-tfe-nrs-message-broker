@@ -82,10 +82,12 @@ class SendSubmissionToNRSService @Inject()(lockRepositoryProvider: MongoLockRepo
           case Downstream4xxError =>
             logger.warn(s"[submitRecordsToNRS] - A 4xx error was returned from NRS for record: ${record.reference}, setting record to $RECORD_SET_TO_PERMANENTLY_FAILED")
             PagerDutyHelper.log("submitRecordsToNRS", RECORD_SET_TO_PERMANENTLY_FAILED)
+            logger.debug(s"[submitRecordsToNRS] Bad request sent to NRS: ${record.payload}")
             record.copy(status = PERMANENTLY_FAILED)
           case _ =>
             logger.warn(s"[invoke] - Received error from NRS for record: ${record.reference}, setting to $FAILED_PENDING_RETRY")
             PagerDutyHelper.log("submitRecordsToNRS", RECORD_SET_TO_FAILED_PENDING_RETRY)
+            logger.debug(s"[submitRecordsToNRS] Bad request sent to NRS: ${record.payload}")
             record.copy(status = FAILED_PENDING_RETRY)
         },
           _ => {
