@@ -21,13 +21,14 @@ import models.response.{Downstream4xxError, JsonValidationError, NRSSuccessRespo
 import play.api.http.Status
 import play.api.libs.json.{Json, Reads}
 import support.UnitSpec
-import uk.gov.hmrc.http.{HttpClient, HttpResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.HttpResponse
 
 class NRSHttpParserSpec extends UnitSpec with MockHttpClient{
 
   lazy val httpParser: NRSHttpParser[NRSSuccessResponse] = new NRSHttpParser[NRSSuccessResponse] {
     override implicit val reads: Reads[NRSSuccessResponse] = NRSSuccessResponse.format
-    override def http: HttpClient = mockHttpClient
+    override def http: HttpClientV2 = mockHttpClient
   }
 
   "NRSReads.read(method: String, url: String, response: HttpResponse)" - {

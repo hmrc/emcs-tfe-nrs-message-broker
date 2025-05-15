@@ -18,13 +18,15 @@ package connectors
 
 import models.response.{Downstream4xxError, ErrorResponse, JsonValidationError, UnexpectedDownstreamResponseError}
 import play.api.http.Status.ACCEPTED
-import play.api.libs.json.Writes
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
+import play.api.libs.json.{Json, Writes}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 
+import java.net.URL
 import scala.concurrent.{ExecutionContext, Future}
 
 trait NRSHttpParser[A] extends BaseConnectorUtils[A] {
-    def http: HttpClient
+    def http: HttpClientV2
 
     implicit object NRSReads extends HttpReads[Either[ErrorResponse, A]] {
       override def read(method: String, url: String, response: HttpResponse): Either[ErrorResponse, A] = {
@@ -45,7 +47,11 @@ trait NRSHttpParser[A] extends BaseConnectorUtils[A] {
       }
     }
 
-    def post[I](url: String, body: I)(implicit hc: HeaderCarrier, ec: ExecutionContext, writes: Writes[I]): Future[Either[ErrorResponse, A]] =
-      http.POST[I, Either[ErrorResponse, A]](url, body)(writes, NRSReads, hc, ec)
-  }
+    def post[I](url: URL, body: I)(implicit hc: HeaderCarrier, ec: ExecutionContext, writes: Writes[I]): Future[Either[ErrorResponse, A]] = {
+      http
+        .post(url)
+        .withBody(Json.toJson(body))
+        .execute[Either[ErrorResponse, A]](NRSReads, ec)
+    }
+}
 

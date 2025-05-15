@@ -22,7 +22,9 @@ import mocks.connectors.MockHttpClient
 import models.response.{Downstream4xxError, ErrorResponse, JsonValidationError, NRSSuccessResponse}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
+import play.api.libs.json.Json
 import support.UnitSpec
+import uk.gov.hmrc.http.StringContextOps
 
 import scala.concurrent.Future
 
@@ -38,7 +40,7 @@ class NRSConnectorSpec extends UnitSpec
 
   class Setup(response: Either[ErrorResponse, NRSSuccessResponse]) {
 
-    MockHttpClient.post(downstreamUrl, nrsPayload)
+    MockHttpClient.post(url"$downstreamUrl", Json.toJson(nrsPayload))
       .returns(Future.successful(response))
   }
 

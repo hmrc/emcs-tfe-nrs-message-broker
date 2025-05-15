@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package connectors
+package test.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.Fault
+import connectors.NRSConnector
 import fixtures.NRSFixtures
 import models.response.{Downstream4xxError, UnexpectedDownstreamResponseError}
 import play.api.http.Status.{ACCEPTED, INTERNAL_SERVER_ERROR, NOT_FOUND}
 import play.api.libs.json.Json
-import support.IntegrationSpec
+import test.support.IntegrationSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

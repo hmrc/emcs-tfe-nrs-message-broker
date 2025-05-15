@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package repositories
+package test.repositories
 
 import com.mongodb.bulk.BulkWriteResult
 import fixtures.NRSFixtures
@@ -24,6 +24,7 @@ import models.mongo.NRSSubmissionRecord
 import models.mongo.RecordStatusEnum.{FAILED_PENDING_RETRY, PENDING, PERMANENTLY_FAILED, SENT}
 import org.mongodb.scala.Document
 import play.api.test.Helpers._
+import repositories.NRSSubmissionRecordsRepositoryImpl
 
 import java.util.Collections.emptyList
 

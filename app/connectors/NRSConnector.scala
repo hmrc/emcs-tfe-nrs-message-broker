@@ -20,14 +20,15 @@ import config.AppConfig
 import models.request.NRSPayload
 import models.response.{ErrorResponse, NRSSuccessResponse, UnexpectedDownstreamResponseError}
 import play.api.libs.json.{Json, Reads}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import utils.Constants.{ERROR_MESSAGE_LOG_LIMIT, X_API_KEY}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class NRSConnector @Inject()(val http: HttpClient,
+class NRSConnector @Inject()(val http: HttpClientV2,
                              config: AppConfig) extends NRSHttpParser[NRSSuccessResponse] {
 
   override implicit val reads: Reads[NRSSuccessResponse] = NRSSuccessResponse.format
@@ -39,7 +40,7 @@ class NRSConnector @Inject()(val http: HttpClient,
   def submit(payload: NRSPayload)(implicit ec: ExecutionContext): Future[Either[ErrorResponse, NRSSuccessResponse]] = {
     val headerCarrierWithAPIKey = HeaderCarrier(extraHeaders = Seq(X_API_KEY -> apiKey))
     logger.debug(s"[submit] Sending following payload to NRS:\n\n ${Json.toJson(payload)}")
-    post(submissionUrl, payload)(headerCarrierWithAPIKey, implicitly, implicitly).recover {
+    post(url = url"$submissionUrl", body = payload)(headerCarrierWithAPIKey, implicitly, implicitly).recover {
       case error =>
         logger.warn(s"[submit] Unexpected error from NRS: ${error.getClass} ${error.getMessage.take(ERROR_MESSAGE_LOG_LIMIT)}")
         Left(UnexpectedDownstreamResponseError)
