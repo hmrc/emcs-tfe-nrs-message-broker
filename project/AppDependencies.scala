@@ -3,7 +3,7 @@ import sbt.*
 object AppDependencies {
 
   private val hmrcBootstrapVersion = "9.11.0"
-  private val hmrcMongoVersion = "2.3.0"
+  private val hmrcMongoVersion = "2.6.0"
   private val scalamockVersion = "6.0.0"
 
   val playSuffix = "-play-30"
