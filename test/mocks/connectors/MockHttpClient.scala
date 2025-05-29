@@ -17,30 +17,40 @@
 package mocks.connectors
 
 import fixtures.NRSFixtures
+import izumi.reflect.Tag
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import org.scalatest.matchers.should.Matchers
-import play.api.libs.json.Writes
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads}
+import play.api.libs.json.JsValue
+import play.api.libs.ws.BodyWritable
+import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 
+import java.net.URL
 import scala.concurrent.{ExecutionContext, Future}
 
 trait MockHttpClient extends MockFactory with NRSFixtures { this: TestSuite =>
 
-  val mockHttpClient: HttpClient = mock[HttpClient]
+  val mockHttpClient: HttpClientV2 = mock[HttpClientV2]
+  val mockRequestBuilder: RequestBuilder = mock[RequestBuilder]
 
   object MockHttpClient extends Matchers {
 
-    def post[I, T](url: String,
-                   body: I): CallHandler[Future[T]] = {
-      (mockHttpClient
-        .POST[I, T](_: String, _: I, _: Seq[(String, String)])(_: Writes[I], _: HttpReads[T], _: HeaderCarrier, _: ExecutionContext))
-        .expects(assertArgs((actualUrl, actualBody: I, _, _, _, hc, _) => {
-          actualUrl shouldBe url
-          actualBody shouldBe body
-          hc.extraHeaders should contain("X-API-Key" -> testAPIKey)
-        }))
+    def post[T](url: URL,
+                   body: JsValue): CallHandler[Future[T]] = {
+
+      (mockHttpClient.post(_: URL)(_: HeaderCarrier))
+        .expects(url, *)
+        .returns(mockRequestBuilder)
+
+      (mockRequestBuilder.withBody(_: JsValue)(_: BodyWritable[JsValue], _: Tag[JsValue], _: ExecutionContext))
+        .expects(body, *, *, *)
+        .returns(mockRequestBuilder)
+
+      (mockRequestBuilder.execute[T](_: HttpReads[T], _: ExecutionContext))
+        .expects(*, *)
+
     }
 
   }

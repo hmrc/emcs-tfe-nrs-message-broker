@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package support
+package test.support
 
-import connectors.WireMockHelper
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -24,6 +23,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, EitherValues, Optio
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import test.connectors.WireMockHelper
 
 trait IntegrationSpec extends AnyFreeSpec
   with WireMockHelper

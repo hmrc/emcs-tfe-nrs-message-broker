@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package repositories
+package test.repositories
 
 import config.AppConfig
-import support.IntegrationSpec
+import test.support.IntegrationSpec
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 

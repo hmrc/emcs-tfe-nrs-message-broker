@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package controllers
+package test.controllers
 
 import play.api.libs.ws.WSClient
-import support.IntegrationSpec
+import test.support.IntegrationSpec
 
 class HealthEndpointIntegrationSpec extends IntegrationSpec {
 
